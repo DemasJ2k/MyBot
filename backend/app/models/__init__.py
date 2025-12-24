@@ -34,6 +34,15 @@ from app.models.risk import (
     AccountRiskState,
     StrategyRiskBudget,
 )
+from app.models.execution import (
+    ExecutionOrder,
+    ExecutionLog,
+    BrokerConnection,
+    BrokerType,
+    OrderType,
+    OrderSide,
+    OrderStatus,
+)
 
 __all__ = [
     "Base",
@@ -71,4 +80,11 @@ __all__ = [
     "RiskDecisionType",
     "AccountRiskState",
     "StrategyRiskBudget",
+    "ExecutionOrder",
+    "ExecutionLog",
+    "BrokerConnection",
+    "BrokerType",
+    "OrderType",
+    "OrderSide",
+    "OrderStatus",
 ]
