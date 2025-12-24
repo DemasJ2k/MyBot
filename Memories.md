@@ -13,6 +13,9 @@
 - All 4 strategies use same base config pattern with get_default_config()
 - Backtest engine uses position sizing as % of equity (default 2%)
 - Optimization uses background tasks for long-running jobs
+- AI agents follow strict hierarchy: Supervisor → Strategy → Risk → Execution
+- Coordination uses message-based communication with priority ordering
+- Supervisor is the ONLY agent that can transition phases
 
 ## Implementation Notes
 - Prompt 01: Project scaffold with Docker Compose, Next.js frontend, FastAPI backend
@@ -21,6 +24,8 @@
 - Prompt 04: Strategy engine with NBB, JadeCap, Fabio, Tori strategies, 18 tests pass
 - Prompt 05: Backtest engine with Portfolio simulator, PerformanceMetrics, 29 tests pass
 - Prompt 06: Optimization engine with Grid/Random/AI optimizers, Playbooks, 32 tests pass
+- Prompt 07: AI Agent system with Supervisor/Strategy/Risk/Execution agents, 22 tests pass
+- Prompt 08: Multi-Agent Coordination with MessageBus, SharedState, Pipeline, 21 tests pass
 
 ## Gotchas Encountered
 - Alembic logger config needs `qualname` field in alembic.ini
@@ -35,3 +40,8 @@
 - SQLEnum needs `native_enum=False` for cross-database compatibility
 - BacktestEngine.run() is synchronous, not async - adapt optimization engine accordingly
 - ParameterSpace range generation needs epsilon for floating point edge cases
+- bcrypt 5.0.0 incompatible with passlib 1.7.4 - use bcrypt==4.0.1
+- SQLite doesn't support ALTER COLUMN - write explicit CREATE TABLE migrations
+- Alembic autogenerate creates PostgreSQL-specific migrations - review before running
+- conftest.py fixture is `test_db`, not `async_db_session`
+- BacktestResult uses `max_drawdown` and `win_rate`, not `max_drawdown_percent` or `win_rate_percent`

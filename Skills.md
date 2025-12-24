@@ -3,7 +3,7 @@
 ## Backend Development
 - FastAPI async API design with dependency injection
 - SQLAlchemy 2.0 async ORM with mapped_column and Mapped types
-- Alembic migrations for PostgreSQL
+- Alembic migrations for PostgreSQL and SQLite
 - JWT authentication (access + refresh tokens)
 - Pydantic v2 models with email validation
 - Redis integration for caching and rate limiting
@@ -14,6 +14,7 @@
 - AsyncMock and MagicMock for unit testing
 - In-memory SQLite for isolated auth tests
 - Cross-database compatible models (PostgreSQL + SQLite)
+- 141+ unit tests covering all components
 
 ## Infrastructure
 - Docker Compose multi-service orchestration
@@ -62,3 +63,32 @@
 - Background task execution for long-running optimizations
 - Playbook generation from optimal configurations
 - Multi-objective optimization metrics (Sharpe, return, drawdown, win rate)
+
+## AI Agent System
+- Multi-agent architecture (Supervisor → Strategy → Risk → Execution)
+- Agent decision logging with reasoning
+- Persistent agent memory with key-value storage
+- System mode enforcement (GUIDE/AUTONOMOUS)
+- Hard cap validation (max positions, daily trades, drawdown)
+- Strategy evaluation based on backtest performance
+- Risk validation with position sizing
+- Mode-aware execution (simulate vs live)
+
+## Multi-Agent Coordination
+- Inter-agent message bus with priority-based delivery
+- Message types: COMMAND, REQUEST, RESPONSE, EVENT, HALT
+- Request-response correlation with message linking
+- HALT broadcast mechanism for emergency stops
+- Shared state management with cycle tracking
+- Phase transitions (Supervisor-only authority)
+- Agent-prefixed write access control (strategy_*, risk_*, execution_*)
+- Agent health monitoring with heartbeats
+- Error tracking and unhealthy detection (>50% error rate)
+- Unresponsive agent detection (60s timeout)
+- Deterministic coordination pipeline (Strategy → Risk → Execution)
+- Halt capability at any phase in the pipeline
+
+## SQLite vs PostgreSQL Compatibility
+- Avoid ALTER COLUMN operations (SQLite limitation)
+- Use explicit CREATE TABLE migrations instead of autogenerate
+- JSON column support across both databases

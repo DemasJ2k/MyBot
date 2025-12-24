@@ -7,6 +7,7 @@ from app.api.v1 import (
     optimization_routes,
     ai_routes,
     coordination_routes,
+    risk_routes,
 )
 
 api_router = APIRouter()
@@ -17,3 +18,4 @@ api_router.include_router(backtest_routes.router)
 api_router.include_router(optimization_routes.router)
 api_router.include_router(ai_routes.router)
 api_router.include_router(coordination_routes.router)
+api_router.include_router(risk_routes.router)
