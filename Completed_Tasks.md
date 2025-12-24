@@ -290,3 +290,53 @@
   - TestOrderLifecycle: 3 tests for order state transitions
   - TestExecutionResult: 4 tests for result dataclass
 - All 188 tests passing (7 auth + 12 data + 18 strategy + 29 backtest + 32 optimization + 22 AI + 21 coordination + 19 risk + 28 execution)
+
+## 2025-12-25 - Prompt 11: Journaling and Feedback Loop
+- Created journal database models in models/journal.py:
+  - JournalEntry: Immutable trade journal entry with complete trade context
+  - FeedbackDecision: AI feedback loop decision audit log
+  - PerformanceSnapshot: Periodic performance snapshot for trend analysis
+  - TradeSource enum (BACKTEST/LIVE/PAPER)
+- Created JournalWriter (journal/writer.py):
+  - record_backtest_trade(): Records trades from backtest engine
+  - record_live_trade(): Records trades from live execution
+  - record_paper_trade(): Records paper trading trades
+  - Generates unique entry IDs for each trade
+  - Calculates P&L, duration, exit reason
+- Created PerformanceAnalyzer (journal/analyzer.py):
+  - analyze_strategy(): Compares live vs backtest performance
+  - detect_underperformance(): Multi-criteria underperformance detection
+    - Win rate < 40%
+    - Profit factor < 1.0
+    - 5+ consecutive losses
+    - Critical deviation from backtest
+  - create_performance_snapshot(): Creates periodic snapshots
+  - Calculates consecutive win/loss streaks
+- Created FeedbackLoop (journal/feedback_loop.py):
+  - run_feedback_cycle(): Deterministic analysis and action cycle
+  - Triggers: trigger_optimization, disable_strategy, monitor_closely
+  - All decisions logged to audit trail (FeedbackDecision)
+  - Automatic strategy disable via StrategyRiskBudget
+  - run_batch_feedback(): Process multiple strategies at once
+- Created journal API routes (api/v1/journal_routes.py):
+  - GET /journal/entries - Get journal entries with filters
+  - GET /journal/entries/{entry_id} - Get detailed entry
+  - GET /journal/stats - Get aggregated statistics
+  - GET /journal/analyze/{strategy}/{symbol} - Analyze strategy
+  - GET /journal/underperformance/{strategy}/{symbol} - Detect issues
+  - POST /journal/feedback/{strategy}/{symbol} - Run feedback cycle
+  - POST /journal/feedback/batch - Batch feedback for multiple strategies
+  - GET /journal/feedback/decisions - Get decision audit log
+  - GET /journal/snapshots - Get performance snapshots
+  - POST /journal/snapshots/{strategy}/{symbol} - Create snapshot
+  - GET /journal/health - Health check
+- Created migration 010 for journal tables
+- Created 22 unit tests for journal module:
+  - TestJournalWriter: 3 tests for trade recording
+  - TestPerformanceAnalyzer: 5 tests for analysis
+  - TestFeedbackLoop: 4 tests for feedback cycle
+  - TestPerformanceSnapshot: 1 test for snapshot creation
+  - TestJournalRoutes: 7 tests for API endpoints
+  - TestConsecutiveStreaks: 1 test for streak calculation
+  - TestBatchFeedback: 2 tests for batch processing
+- All 210 tests passing (7 auth + 12 data + 18 strategy + 29 backtest + 32 optimization + 22 AI + 21 coordination + 19 risk + 28 execution + 22 journal)

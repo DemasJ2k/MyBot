@@ -1,65 +1,195 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import { Sidebar, PageContainer } from '@/components/layout';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { useMode } from '@/providers/ModeProvider';
+import { useRiskState } from '@/hooks/useRisk';
+import { useSignals } from '@/hooks/useStrategies';
+import { formatCurrency, formatPercent, getValueColor } from '@/lib/utils';
+import {
+  TrendingUp,
+  TrendingDown,
+  Activity,
+  AlertTriangle,
+  Zap,
+  Shield,
+} from 'lucide-react';
+
+interface SignalItem {
+  id: number;
+  strategy_name: string;
+  symbol: string;
+  signal_type: string;
+  status: string;
+  entry_price: number;
+  confidence: number;
+}
+
+export default function Dashboard() {
+  const { mode } = useMode();
+  const { data: riskState, isLoading: riskLoading } = useRiskState();
+  const { data: signals, isLoading: signalsLoading } = useSignals({ limit: 5 });
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <>
+      <Sidebar />
+      <PageContainer title="Dashboard">
+        {/* Mode Banner */}
+        <div
+          className={`mb-6 p-4 rounded-lg flex items-center gap-3 ${
+            mode === 'guide'
+              ? 'bg-blue-50 border border-blue-200 dark:bg-blue-950 dark:border-blue-800'
+              : 'bg-green-50 border border-green-200 dark:bg-green-950 dark:border-green-800'
+          }`}
+        >
+          {mode === 'guide' ? (
+            <>
+              <Shield className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              <div>
+                <p className="font-medium text-blue-900 dark:text-blue-100">GUIDE Mode Active</p>
+                <p className="text-sm text-blue-700 dark:text-blue-300">
+                  Signals require manual approval before execution
+                </p>
+              </div>
+            </>
+          ) : (
+            <>
+              <Zap className="h-5 w-5 text-green-600 dark:text-green-400" />
+              <div>
+                <p className="font-medium text-green-900 dark:text-green-100">
+                  AUTONOMOUS Mode Active
+                </p>
+                <p className="text-sm text-green-700 dark:text-green-300">
+                  Signals are automatically executed
+                </p>
+              </div>
+            </>
+          )}
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Account Balance</CardTitle>
+              <TrendingUp className="h-4 w-4 text-gray-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {riskLoading ? (
+                  <span className="animate-pulse">Loading...</span>
+                ) : (
+                  formatCurrency(riskState?.account_balance || 100000)
+                )}
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Peak: {formatCurrency(riskState?.peak_balance || 100000)}</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Daily P&L</CardTitle>
+              <Activity className="h-4 w-4 text-gray-500" />
+            </CardHeader>
+            <CardContent>
+              <div className={`text-2xl font-bold ${getValueColor(riskState?.daily_pnl || 0)}`}>
+                {riskLoading ? (
+                  <span className="animate-pulse">Loading...</span>
+                ) : (
+                  formatCurrency(riskState?.daily_pnl || 0)
+                )}
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Daily loss: {formatPercent(riskState?.daily_loss_percent || 0)}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Current Drawdown</CardTitle>
+              <TrendingDown className="h-4 w-4 text-gray-500" />
+            </CardHeader>
+            <CardContent>
+              <div className={`text-2xl font-bold ${getValueColor(-(riskState?.current_drawdown_percent || 0))}`}>
+                {riskLoading ? (
+                  <span className="animate-pulse">Loading...</span>
+                ) : (
+                  formatPercent(riskState?.current_drawdown_percent || 0)
+                )}
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Open positions: {riskState?.open_positions_count || 0}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Risk Status</CardTitle>
+              <AlertTriangle className="h-4 w-4 text-gray-500" />
+            </CardHeader>
+            <CardContent>
+              {riskLoading ? (
+                <span className="animate-pulse">Loading...</span>
+              ) : riskState?.emergency_shutdown_active ? (
+                <Badge variant="destructive" className="text-lg">SHUTDOWN</Badge>
+              ) : riskState?.throttling_active ? (
+                <Badge variant="warning" className="text-lg">THROTTLED</Badge>
+              ) : (
+                <Badge variant="success" className="text-lg">NORMAL</Badge>
+              )}
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                Trades today: {riskState?.trades_today || 0}
+              </p>
+            </CardContent>
+          </Card>
         </div>
-      </main>
-    </div>
+
+        {/* Recent Signals */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Signals</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {signalsLoading ? (
+              <div className="animate-pulse space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-12 bg-gray-100 dark:bg-gray-800 rounded" />
+                ))}
+              </div>
+            ) : signals?.length > 0 ? (
+              <div className="space-y-3">
+                {signals.map((signal: SignalItem) => (
+                  <div
+                    key={signal.id}
+                    className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Badge variant={signal.signal_type === 'long' ? 'success' : 'destructive'}>
+                        {signal.signal_type.toUpperCase()}
+                      </Badge>
+                      <div>
+                        <p className="font-medium">{signal.symbol}</p>
+                        <p className="text-sm text-gray-500">{signal.strategy_name}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium">{formatCurrency(signal.entry_price)}</p>
+                      <Badge variant={signal.status === 'pending' ? 'warning' : signal.status === 'executed' ? 'success' : 'secondary'}>
+                        {signal.status}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500 text-center py-8">No recent signals</p>
+            )}
+          </CardContent>
+        </Card>
+      </PageContainer>
+    </>
   );
 }
