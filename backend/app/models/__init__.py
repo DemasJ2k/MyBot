@@ -11,6 +11,23 @@ from app.models.optimization import (
     OptimizationStatus,
     Playbook,
 )
+from app.models.ai_agent import (
+    AIDecision,
+    AgentMemory,
+    SystemConfig,
+    SystemMode,
+    AgentRole,
+    DecisionType,
+)
+from app.models.coordination import (
+    AgentMessage,
+    CoordinationState,
+    AgentHealth,
+    AgentAuthorityLevel,
+    CoordinationPhase,
+    MessageType,
+    MessagePriority,
+)
 
 __all__ = [
     "Base",
@@ -31,4 +48,17 @@ __all__ = [
     "OptimizationMethod",
     "OptimizationStatus",
     "Playbook",
+    "AIDecision",
+    "AgentMemory",
+    "SystemConfig",
+    "SystemMode",
+    "AgentRole",
+    "DecisionType",
+    "AgentMessage",
+    "CoordinationState",
+    "AgentHealth",
+    "AgentAuthorityLevel",
+    "CoordinationPhase",
+    "MessageType",
+    "MessagePriority",
 ]
