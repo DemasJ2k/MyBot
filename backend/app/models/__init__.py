@@ -43,6 +43,12 @@ from app.models.execution import (
     OrderSide,
     OrderStatus,
 )
+from app.models.journal import (
+    JournalEntry,
+    FeedbackDecision,
+    PerformanceSnapshot,
+    TradeSource,
+)
 
 __all__ = [
     "Base",
@@ -87,4 +93,8 @@ __all__ = [
     "OrderType",
     "OrderSide",
     "OrderStatus",
+    "JournalEntry",
+    "FeedbackDecision",
+    "PerformanceSnapshot",
+    "TradeSource",
 ]
