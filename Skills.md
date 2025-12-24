@@ -112,3 +112,31 @@
 - Avoid ALTER COLUMN operations (SQLite limitation)
 - Use explicit CREATE TABLE migrations instead of autogenerate
 - JSON column support across both databases
+
+## Frontend Development (Next.js)
+- Next.js 14 App Router architecture
+- TypeScript strict mode configuration
+- TailwindCSS v3 styling with custom configuration
+- React Query for server state management
+- Axios with interceptors for API client
+- Context API for global state (ModeProvider)
+- Custom hooks pattern for data fetching
+- Component library with CVA (class-variance-authority)
+- Jest + React Testing Library for unit tests
+
+## Frontend Patterns
+- Provider composition (QueryProvider → ModeProvider → children)
+- Error boundary for graceful error handling
+- Form validation patterns with useState
+- Token management (localStorage for persistence)
+- Automatic token injection via axios interceptors
+- 401 response handling with auto-logout
+- Mode-aware UI components (GUIDE vs AUTONOMOUS)
+- Responsive layout with sidebar navigation
+
+## Frontend Testing
+- Jest configuration for Next.js projects
+- jest-environment-jsdom for DOM testing
+- @testing-library/react for component testing
+- Mock service layer for isolated tests
+- Test file organization by component type

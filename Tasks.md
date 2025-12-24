@@ -14,12 +14,18 @@
 - [x] Prompt 09: Risk Engine
 - [x] Prompt 10: Execution Engine
 - [x] Prompt 11: Journaling and Feedback Loop
+- [x] Prompt 12: Frontend Core
 
 ### Pending
-- [ ] Prompt 12-18: Remaining implementation prompts
+- [ ] Prompt 13: Strategy Dashboard (UI for strategies, signals, analysis)
+- [ ] Prompt 14: Backtest Dashboard (UI for backtesting and results)
+- [ ] Prompt 15: Risk & Journal Dashboard (UI for risk monitoring and journal)
+- [ ] Prompt 16: Integration Testing (End-to-end tests)
+- [ ] Prompt 17: Documentation (API docs, user guide)
+- [ ] Prompt 18: Deployment & DevOps
 
 ## Notes
 - Follow prompts strictly in order (00-18)
 - Always validate each prompt completion before moving to next
 - Run tests after each implementation step
-- 210 tests passing as of Prompt 11 completion
+- 210 backend tests + 41 frontend tests passing as of Prompt 12 completion

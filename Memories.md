@@ -55,3 +55,32 @@
 - BacktestResult uses `max_drawdown` and `win_rate`, not `max_drawdown_percent` or `win_rate_percent`
 - When creating SQLAlchemy model instances in code, must provide ALL required fields (default values from migration don't apply)
 - StrategyRiskBudget needs all numeric fields initialized (total_trades=0, winning_trades=0, etc.)
+
+## Frontend-Specific Gotchas
+- Next.js 15+ has breaking changes with jest - stick to Next.js 14.2.x for stability
+- React 19 has peer dependency conflicts with testing-library - use React 18.3.x
+- jest.setup.js must be plain JavaScript, not TypeScript (SWC parser fails on TS syntax)
+- Next.js builds create .next/standalone/package.json that causes Haste module collision in Jest
+  - Fix: Add `modulePathIgnorePatterns: ['<rootDir>/.next/']` to jest.config.js
+- Date assertions in tests can fail due to timezone differences - use regex patterns
+- ErrorBoundary tests should not try to verify state reset after rerender (not possible with class components)
+- API client tests need careful mocking - module caching affects axios.create mock timing
+- TailwindCSS v3 uses `@tailwind` directives, not `@import "tailwindcss/..."`
+- React Query stale time of 60000ms (1 min) balances freshness with API rate limits
+- ModeProvider defaults to 'guide' on error (safety-first principle)
+
+## Test Counts by Prompt
+- Prompt 02 (Auth): 7 tests
+- Prompt 03 (Data): 12 tests
+- Prompt 04 (Strategy): 18 tests
+- Prompt 05 (Backtest): 29 tests
+- Prompt 06 (Optimization): 32 tests
+- Prompt 07 (AI Agents): 22 tests
+- Prompt 08 (Coordination): 21 tests
+- Prompt 09 (Risk): 19 tests
+- Prompt 10 (Execution): 28 tests
+- Prompt 11 (Journal): 22 tests
+- **Backend Total: 210 tests**
+- Prompt 12 (Frontend): 41 tests
+- **Frontend Total: 41 tests**
+- **Combined Total: 251 tests**

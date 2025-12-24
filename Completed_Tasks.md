@@ -340,3 +340,77 @@
   - TestConsecutiveStreaks: 1 test for streak calculation
   - TestBatchFeedback: 2 tests for batch processing
 - All 210 tests passing (7 auth + 12 data + 18 strategy + 29 backtest + 32 optimization + 22 AI + 21 coordination + 19 risk + 28 execution + 22 journal)
+
+## 2025-01-XX - Prompt 12: Frontend Core
+- Downgraded from Next.js 16 to Next.js 14.2.0 for stability
+- Downgraded from React 19 to React 18.3.0 for compatibility
+- Configured TypeScript with strict mode and ES2020 target
+- Set up TailwindCSS 3.4.0 with custom configuration
+- Created TypeScript type definitions (frontend/types/index.ts):
+  - User, AuthTokens, AuthState for authentication
+  - SystemMode enum (guide/autonomous)
+  - Signal, SignalType, SignalStatus for trading signals
+  - BacktestResult, BacktestConfig for backtesting
+  - ExecutionOrder, OrderType, OrderSide, OrderStatus for execution
+  - JournalEntry, TradeSource for journaling
+  - RiskState, RiskDecision for risk management
+  - AIDecision, AgentRole for AI agents
+  - OptimizationJob, Playbook for optimization
+  - Query params interfaces for all endpoints
+- Created API client (frontend/services/api.ts):
+  - ApiClient class with axios and interceptors
+  - Request interceptor for JWT token injection
+  - Response interceptor for 401 handling (auto-logout)
+  - Full endpoint coverage: auth, strategies, backtest, optimization,
+    execution, risk, journal, AI, data
+- Created providers:
+  - QueryProvider: React Query with 1-min stale time, single retry
+  - ModeProvider: System mode context (guide/autonomous) with API sync
+- Created 10 custom hooks:
+  - useAuth: Login, logout, registration, token refresh
+  - useStrategies: Strategy list, signals, analysis
+  - useBacktest: Results list, details, run backtest
+  - useOptimization: Jobs, playbooks, run optimization
+  - useExecution: Orders, execute signals
+  - useRisk: Risk state, decisions, validation
+  - useJournal: Entries, stats, feedback
+  - useAI: Decisions, config, mode switching
+  - useData: Candles, quotes, symbol search
+- Created UI component library:
+  - Button: 8 variants (default, destructive, outline, secondary, ghost, link, success, warning)
+  - Card: Header, title, description, content, footer
+  - Input: Standard input with error state
+  - Label: Form label component
+  - Badge: Status indicator with variants
+  - Alert: Info/warning/error/success messages
+  - Select: Dropdown selection
+  - Loading/Spinner: Loading states
+- Created layout components:
+  - ModeIndicator: Shows current mode with color coding
+  - ModeSwitch: Toggle between GUIDE/AUTONOMOUS
+  - ModeWarning: Alert for autonomous mode
+  - Sidebar: Navigation with Dashboard, Strategies, Backtest, Risk, Journal, AI links
+  - Header: Top bar with mode indicator
+  - PageContainer: Consistent page wrapper
+- Created ErrorBoundary component for graceful error handling
+- Created auth pages:
+  - Login page with form validation
+  - Register page with auto-login after success
+- Created Dashboard page:
+  - Mode status banner
+  - Stats grid (balance, P&L, drawdown, risk status)
+  - Recent signals list
+- Configured Jest with:
+  - jest-environment-jsdom for React testing
+  - @testing-library/react 14.2.0
+  - modulePathIgnorePatterns for .next/
+- Created 41 frontend tests across 6 test suites:
+  - useAuth.test.tsx: 5 tests for auth hook
+  - utils.test.ts: 12 tests for utility functions
+  - ui.test.tsx: 8 tests for UI components
+  - ModeProvider.test.tsx: 5 tests for mode context
+  - api.test.ts: 5 tests for API client
+  - ErrorBoundary.test.tsx: 6 tests for error handling
+- npm run build: Successful compilation, 4 pages generated
+- npm test: All 41 tests passing
+- Backend tests verified: All 210 tests still passing
