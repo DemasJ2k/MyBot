@@ -190,3 +190,51 @@
 - Created migration 007 for coordination tables
 - Created 21 unit tests for coordination
 - All 141 tests passing (7 auth + 12 data + 18 strategy + 29 backtest + 32 optimization + 22 AI + 21 coordination)
+
+## 2025-12-25 - Prompt 09: Risk Engine
+- Created immutable hard risk constants in risk/constants.py:
+  - MAX_RISK_PER_TRADE_PERCENT = 2.0%
+  - EMERGENCY_DRAWDOWN_PERCENT = 15.0%
+  - MAX_OPEN_POSITIONS = 10
+  - MAX_TRADES_PER_DAY = 20
+  - MAX_TRADES_PER_HOUR = 5
+  - MAX_POSITION_SIZE_LOTS = 1.0
+  - MIN_RISK_REWARD_RATIO = 1.5
+  - MAX_DAILY_LOSS_PERCENT = 5.0%
+  - RiskSeverity class (INFO/WARNING/CRITICAL/EMERGENCY)
+- Created Risk database models:
+  - RiskDecision: Audit log for all risk decisions with full metrics
+  - AccountRiskState: Account balance, drawdown, daily P&L, positions, exposure
+  - StrategyRiskBudget: Per-strategy risk limits and performance tracking
+  - RiskDecisionType enum (TRADE_APPROVAL/REJECTION/POSITION_CLOSE/etc.)
+- Created RiskValidator with 9-check validation pipeline:
+  1. Emergency shutdown check (highest priority)
+  2. Account drawdown check (triggers shutdown at 15%)
+  3. Max positions check (10 limit)
+  4. Daily trade limit check (20/day)
+  5. Hourly trade limit check (5/hour)
+  6. Position size check (1.0 lots max)
+  7. Risk/reward ratio check (1.5:1 min)
+  8. Strategy budget check (enabled, consecutive losses)
+  9. Daily loss limit check (5% max)
+- Created RiskMonitor for continuous state tracking:
+  - update_account_state(): Updates balance, drawdown, P&L, positions
+  - update_strategy_budget(): Tracks strategy performance, auto-disable
+  - reset_emergency_shutdown(): Manual intervention to reset
+  - reset_daily_metrics(): Daily trading day reset
+  - enable_strategy(): Re-enable disabled strategies
+- Strategy auto-disable after 5 consecutive losses
+- Created risk_routes.py with:
+  - POST /risk/validate - Validate trade against all limits
+  - GET /risk/state - Get current account risk state
+  - POST /risk/state/update - Update account state
+  - GET /risk/decisions - Get risk decision audit log
+  - GET /risk/budgets - Get all strategy risk budgets
+  - GET /risk/limits - Get all hard risk limits
+  - POST /risk/emergency/reset - Reset emergency shutdown
+  - POST /risk/daily/reset - Reset daily metrics
+  - POST /risk/strategy/enable - Re-enable disabled strategy
+- Created migration 008 for risk engine tables
+- Fixed StrategyRiskBudget creation to include all required fields
+- Created 19 unit tests for risk engine
+- All 160 tests passing (7 auth + 12 data + 18 strategy + 29 backtest + 32 optimization + 22 AI + 21 coordination + 19 risk)

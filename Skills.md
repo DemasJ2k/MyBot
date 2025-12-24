@@ -88,6 +88,26 @@
 - Deterministic coordination pipeline (Strategy → Risk → Execution)
 - Halt capability at any phase in the pipeline
 
+## Risk Engine
+- Immutable hard risk constants (cannot be changed at runtime)
+- 9-check validation pipeline in severity order:
+  1. Emergency shutdown (highest priority)
+  2. Account drawdown (15% triggers shutdown)
+  3. Max positions (10 limit)
+  4. Daily trade limit (20/day)
+  5. Hourly trade limit (5/hour)
+  6. Position size (1.0 lots max)
+  7. Risk/reward ratio (1.5:1 min)
+  8. Strategy budget (enabled status, consecutive losses)
+  9. Daily loss limit (5% max)
+- Risk decision audit trail with full metrics
+- Account state tracking (balance, drawdown, P&L, positions)
+- Strategy risk budget with auto-disable (5 consecutive losses)
+- Emergency shutdown mechanism with manual reset
+- Daily metrics reset for trading day boundaries
+- Position size calculation based on risk parameters
+- Risk Engine has absolute veto power (cannot be bypassed)
+
 ## SQLite vs PostgreSQL Compatibility
 - Avoid ALTER COLUMN operations (SQLite limitation)
 - Use explicit CREATE TABLE migrations instead of autogenerate

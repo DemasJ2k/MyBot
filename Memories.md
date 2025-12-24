@@ -26,6 +26,14 @@
 - Prompt 06: Optimization engine with Grid/Random/AI optimizers, Playbooks, 32 tests pass
 - Prompt 07: AI Agent system with Supervisor/Strategy/Risk/Execution agents, 22 tests pass
 - Prompt 08: Multi-Agent Coordination with MessageBus, SharedState, Pipeline, 21 tests pass
+- Prompt 09: Risk Engine with immutable hard limits, 9-check validation pipeline, 19 tests pass
+
+## Technical Decisions (continued)
+- Risk Engine operates independently of AI agents (absolute veto power)
+- Hard risk limits are Python constants, not database-configurable
+- Risk checks execute in severity order (emergency shutdown first)
+- Strategy auto-disables after 5 consecutive losses (safety mechanism)
+- Risk decisions logged with full audit trail for compliance
 
 ## Gotchas Encountered
 - Alembic logger config needs `qualname` field in alembic.ini
@@ -45,3 +53,5 @@
 - Alembic autogenerate creates PostgreSQL-specific migrations - review before running
 - conftest.py fixture is `test_db`, not `async_db_session`
 - BacktestResult uses `max_drawdown` and `win_rate`, not `max_drawdown_percent` or `win_rate_percent`
+- When creating SQLAlchemy model instances in code, must provide ALL required fields (default values from migration don't apply)
+- StrategyRiskBudget needs all numeric fields initialized (total_trades=0, winning_trades=0, etc.)
