@@ -1,4 +1,4 @@
-from sqlalchemy import String, Float, Integer, Enum as SQLEnum, Index
+from sqlalchemy import String, Float, Integer, Enum as SQLEnum, ForeignKey, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime
 from typing import Optional, List, TYPE_CHECKING
@@ -7,6 +7,7 @@ from app.models.base import Base, TimestampMixin
 
 if TYPE_CHECKING:
     from app.models.signal import Signal
+    from app.models.user import User
 
 
 class PositionStatus(str, enum.Enum):
@@ -25,6 +26,7 @@ class Position(Base, TimestampMixin):
     __tablename__ = "positions"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
     strategy_name: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
     symbol: Mapped[str] = mapped_column(String(20), nullable=False, index=True)
     side: Mapped[PositionSide] = mapped_column(SQLEnum(PositionSide), nullable=False)
@@ -58,10 +60,12 @@ class Position(Base, TimestampMixin):
 
     # Relationships
     signal: Mapped[Optional["Signal"]] = relationship("Signal", back_populates="position")
+    user: Mapped["User"] = relationship("User", lazy="selectin")
 
     __table_args__ = (
         Index("ix_position_strategy_status", "strategy_name", "status"),
         Index("ix_position_symbol_status", "symbol", "status"),
+        Index("ix_position_user_id", "user_id"),
     )
 
     def __repr__(self) -> str:

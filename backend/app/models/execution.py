@@ -3,9 +3,12 @@
 from sqlalchemy import String, Float, Integer, Enum as SQLEnum, Boolean, Index, Text, ForeignKey, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, TYPE_CHECKING
 import enum
 from app.models.base import Base, TimestampMixin
+
+if TYPE_CHECKING:
+    from app.models.user import User
 
 
 class BrokerType(str, enum.Enum):
@@ -49,6 +52,7 @@ class ExecutionOrder(Base, TimestampMixin):
     __tablename__ = "execution_orders"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
 
     # Order identification
     client_order_id: Mapped[str] = mapped_column(String(100), unique=True, nullable=False, index=True)
@@ -110,8 +114,12 @@ class ExecutionOrder(Base, TimestampMixin):
     # Extra data (renamed from metadata to avoid SQLAlchemy conflict)
     extra_data: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
 
+    # Relationships
+    user: Mapped["User"] = relationship("User", lazy="selectin")
+
     __table_args__ = (
         Index("ix_execution_order_broker_symbol", "broker_type", "symbol"),
+        Index("ix_execution_order_user_id", "user_id"),
     )
 
     def __repr__(self) -> str:

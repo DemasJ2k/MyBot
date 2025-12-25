@@ -39,11 +39,12 @@ class TestRiskConstants:
 class TestRiskValidator:
     """Test risk validator functionality."""
 
-    async def test_validate_trade_approved(self, test_db):
+    async def test_validate_trade_approved(self, test_db, test_user):
         """Test that a valid trade is approved."""
         validator = RiskValidator(db=test_db)
 
         signal = Signal(
+            user_id=test_user.id,
             strategy_name="NBB",
             symbol="EURUSD",
             signal_type=SignalType.LONG,
@@ -71,11 +72,12 @@ class TestRiskValidator:
         assert reason is None
         assert "checks_performed" in metrics
 
-    async def test_validate_trade_emergency_drawdown(self, test_db):
+    async def test_validate_trade_emergency_drawdown(self, test_db, test_user):
         """Test that emergency drawdown triggers rejection."""
         validator = RiskValidator(db=test_db)
 
         signal = Signal(
+            user_id=test_user.id,
             strategy_name="NBB",
             symbol="EURUSD",
             signal_type=SignalType.LONG,
@@ -103,12 +105,13 @@ class TestRiskValidator:
         assert approved is False
         assert "Emergency drawdown" in reason
 
-    async def test_risk_reward_ratio_check(self, test_db):
+    async def test_risk_reward_ratio_check(self, test_db, test_user):
         """Test that low R:R ratio is rejected."""
         validator = RiskValidator(db=test_db)
 
         # Low R:R ratio (< 1.5)
         signal = Signal(
+            user_id=test_user.id,
             strategy_name="NBB",
             symbol="EURUSD",
             signal_type=SignalType.LONG,
@@ -135,11 +138,12 @@ class TestRiskValidator:
         assert approved is False
         assert "Risk/reward ratio" in reason
 
-    async def test_max_positions_check(self, test_db):
+    async def test_max_positions_check(self, test_db, test_user):
         """Test that max positions limit is enforced."""
         # Create 10 open positions
         for i in range(10):
             position = Position(
+                user_id=test_user.id,
                 strategy_name="NBB",
                 symbol=f"SYMBOL{i}",
                 side=PositionSide.LONG,
@@ -156,6 +160,7 @@ class TestRiskValidator:
         validator = RiskValidator(db=test_db)
 
         signal = Signal(
+            user_id=test_user.id,
             strategy_name="NBB",
             symbol="EURUSD",
             signal_type=SignalType.LONG,
@@ -182,7 +187,7 @@ class TestRiskValidator:
         assert approved is False
         assert "Maximum open positions" in reason
 
-    async def test_emergency_shutdown_blocks_trades(self, test_db):
+    async def test_emergency_shutdown_blocks_trades(self, test_db, test_user):
         """Test that emergency shutdown blocks all trades."""
         # Create state with emergency shutdown active
         state = AccountRiskState(
@@ -206,6 +211,7 @@ class TestRiskValidator:
         validator = RiskValidator(db=test_db)
 
         signal = Signal(
+            user_id=test_user.id,
             strategy_name="NBB",
             symbol="EURUSD",
             signal_type=SignalType.LONG,
@@ -327,12 +333,13 @@ class TestRiskMonitor:
         updated_state = await monitor.get_account_state()
         assert updated_state.emergency_shutdown_active is False
 
-    async def test_strategy_auto_disable(self, test_db):
+    async def test_strategy_auto_disable(self, test_db, test_user):
         """Test strategy auto-disable after consecutive losses."""
         monitor = RiskMonitor(db=test_db)
 
         # Create a position with loss
         position = Position(
+            user_id=test_user.id,
             strategy_name="NBB",
             symbol="EURUSD",
             side=PositionSide.LONG,

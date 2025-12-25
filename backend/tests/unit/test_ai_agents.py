@@ -46,11 +46,12 @@ class TestRiskAgent:
         )
         assert position_size_zero == 0.0
 
-    async def test_validate_signal_approved(self, test_db):
+    async def test_validate_signal_approved(self, test_db, test_user):
         """Test signal validation when all checks pass."""
         agent = RiskAgent(db=test_db, system_mode=SystemMode.AUTONOMOUS)
 
         signal = Signal(
+            user_id=test_user.id,
             strategy_name="NBB",
             symbol="EURUSD",
             signal_type=SignalType.LONG,
@@ -70,13 +71,14 @@ class TestRiskAgent:
         assert validation["position_size"] > 0
         assert validation["reason"] == "All risk checks passed"
 
-    async def test_validate_signal_max_open_positions(self, test_db):
+    async def test_validate_signal_max_open_positions(self, test_db, test_user):
         """Test signal rejection when max open positions reached."""
         agent = RiskAgent(db=test_db, system_mode=SystemMode.AUTONOMOUS)
 
         # Create 10 open positions (at limit)
         for i in range(10):
             position = Position(
+                user_id=test_user.id,
                 strategy_name=f"Strategy{i}",
                 symbol="EURUSD",
                 side=PositionSide.LONG,
@@ -93,6 +95,7 @@ class TestRiskAgent:
         await test_db.commit()
 
         signal = Signal(
+            user_id=test_user.id,
             strategy_name="NBB",
             symbol="EURUSD",
             signal_type=SignalType.LONG,
@@ -111,7 +114,7 @@ class TestRiskAgent:
         assert validation["approved"] is False
         assert "Max open positions reached" in validation["reason"]
 
-    async def test_validate_signal_daily_trade_limit(self, test_db):
+    async def test_validate_signal_daily_trade_limit(self, test_db, test_user):
         """Test signal rejection when daily trade limit reached."""
         agent = RiskAgent(db=test_db, system_mode=SystemMode.AUTONOMOUS)
 
@@ -120,6 +123,7 @@ class TestRiskAgent:
 
         for i in range(20):
             position = Position(
+                user_id=test_user.id,
                 strategy_name=f"Strategy{i}",
                 symbol="EURUSD",
                 side=PositionSide.LONG,
@@ -139,6 +143,7 @@ class TestRiskAgent:
         await test_db.commit()
 
         signal = Signal(
+            user_id=test_user.id,
             strategy_name="NBB",
             symbol="EURUSD",
             signal_type=SignalType.LONG,
@@ -157,11 +162,12 @@ class TestRiskAgent:
         assert validation["approved"] is False
         assert "Daily trade limit reached" in validation["reason"]
 
-    async def test_validate_signal_low_risk_reward(self, test_db):
+    async def test_validate_signal_low_risk_reward(self, test_db, test_user):
         """Test signal rejection when R:R ratio is too low."""
         agent = RiskAgent(db=test_db, system_mode=SystemMode.AUTONOMOUS)
 
         signal = Signal(
+            user_id=test_user.id,
             strategy_name="NBB",
             symbol="EURUSD",
             signal_type=SignalType.LONG,

@@ -83,7 +83,7 @@ class BacktestEngine:
     Example:
         engine = BacktestEngine(config)
         result = engine.run(candles)
-        print(result.metrics.summary())
+    # Use structured logging when inspecting results rather than print
     """
     
     def __init__(self, config: BacktestConfig):

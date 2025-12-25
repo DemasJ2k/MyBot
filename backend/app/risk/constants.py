@@ -42,3 +42,26 @@ class RiskSeverity:
     WARNING = "warning"
     CRITICAL = "critical"
     EMERGENCY = "emergency"
+
+
+# Maximum position size as percentage of account balance
+MAX_POSITION_SIZE_PERCENT = 10.0
+
+# Strategy auto-disable threshold (consecutive losses)
+STRATEGY_AUTO_DISABLE_THRESHOLD = 5
+
+
+def validate_immutable_constants() -> None:
+    """
+    Validates that hard-coded constants are within acceptable ranges.
+    Called on system startup.
+    Raises AssertionError if any constant is out of range.
+    """
+    assert 0 < MAX_RISK_PER_TRADE_PERCENT <= 5.0, "MAX_RISK_PER_TRADE_PERCENT out of acceptable range"
+    assert 0 < MAX_DAILY_LOSS_PERCENT <= 10.0, "MAX_DAILY_LOSS_PERCENT out of acceptable range"
+    assert 0 < EMERGENCY_DRAWDOWN_PERCENT <= 25.0, "EMERGENCY_DRAWDOWN_PERCENT out of acceptable range"
+    assert 1 <= MAX_OPEN_POSITIONS <= 50, "MAX_OPEN_POSITIONS out of acceptable range"
+    assert 1 <= MAX_TRADES_PER_DAY <= 100, "MAX_TRADES_PER_DAY out of acceptable range"
+    assert 1.0 <= MIN_RISK_REWARD_RATIO <= 5.0, "MIN_RISK_REWARD_RATIO out of acceptable range"
+    assert 0 < MAX_POSITION_SIZE_PERCENT <= 20.0, "MAX_POSITION_SIZE_PERCENT out of acceptable range"
+    assert 1 <= STRATEGY_AUTO_DISABLE_THRESHOLD <= 10, "STRATEGY_AUTO_DISABLE_THRESHOLD out of acceptable range"

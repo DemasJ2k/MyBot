@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
+from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.database import get_db
@@ -12,8 +13,12 @@ from app.schemas.user_schema import (
 )
 from app.auth.password import hash_password, verify_password
 from app.auth.jwt import create_access_token, create_refresh_token, decode_token
-from app.auth.dependencies import get_current_user
+from app.auth.dependencies import get_current_user, security
+from app.auth.blacklist import blacklist_token, is_token_blacklisted
 from app.core.exceptions import InvalidCredentialsException, UserAlreadyExistsException
+from app.core.rate_limiter import limiter
+from app.config import settings
+import secrets
 
 router = APIRouter(tags=["Authentication"])
 
@@ -35,23 +40,35 @@ async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/login", response_model=TokenResponse)
-async def login(credentials: UserLogin, db: AsyncSession = Depends(get_db)):
+@limiter.limit("10/minute")
+async def login(request: Request, credentials: UserLogin, response: Response, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(User).where(User.email == credentials.email))
     user = result.scalar_one_or_none()
     if not user or not verify_password(credentials.password, user.hashed_password):
         raise InvalidCredentialsException()
     if not user.is_active:
         raise InvalidCredentialsException()
+    csrf_token = secrets.token_urlsafe(32)
+    response.set_cookie(
+        key="csrftoken",
+        value=csrf_token,
+        httponly=False,
+        samesite="lax",
+        secure=settings.is_production,
+    )
     return TokenResponse(
-        access_token=create_access_token({"sub": str(user.id)}),
-        refresh_token=create_refresh_token({"sub": str(user.id)}),
+        access_token=create_access_token({"sub": str(user.id), "csrf": csrf_token}),
+        refresh_token=create_refresh_token({"sub": str(user.id), "csrf": csrf_token}),
         expires_in=1800
     )
 
 
 @router.post("/refresh", response_model=TokenResponse)
-async def refresh(token_data: TokenRefresh, db: AsyncSession = Depends(get_db)):
+@limiter.limit("30/minute")
+async def refresh(request: Request, token_data: TokenRefresh, response: Response, db: AsyncSession = Depends(get_db)):
     try:
+        if await is_token_blacklisted(token_data.refresh_token):
+            raise HTTPException(status_code=401, detail="Token revoked")
         payload = decode_token(token_data.refresh_token)
         if payload.get("type") != "refresh":
             raise HTTPException(status_code=401, detail="Invalid token type")
@@ -60,9 +77,17 @@ async def refresh(token_data: TokenRefresh, db: AsyncSession = Depends(get_db)):
         user = result.scalar_one_or_none()
         if not user or not user.is_active:
             raise HTTPException(status_code=401, detail="Invalid user")
+        csrf_token = payload.get("csrf") or secrets.token_urlsafe(32)
+        response.set_cookie(
+            key="csrftoken",
+            value=csrf_token,
+            httponly=False,
+            samesite="lax",
+            secure=settings.is_production,
+        )
         return TokenResponse(
-            access_token=create_access_token({"sub": str(user.id)}),
-            refresh_token=create_refresh_token({"sub": str(user.id)}),
+            access_token=create_access_token({"sub": str(user.id), "csrf": csrf_token}),
+            refresh_token=create_refresh_token({"sub": str(user.id), "csrf": csrf_token}),
             expires_in=1800
         )
     except Exception:
@@ -75,5 +100,12 @@ async def get_me(user: User = Depends(get_current_user)):
 
 
 @router.post("/logout")
-async def logout():
+async def logout(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    token_data: TokenRefresh | None = None
+):
+    # Blacklist both access token and optional refresh token
+    await blacklist_token(credentials.credentials)
+    if token_data and token_data.refresh_token:
+        await blacklist_token(token_data.refresh_token)
     return {"message": "Logged out"}

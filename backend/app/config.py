@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6379/0"
     debug: bool = True
     csrf_protection_enabled: bool = True
+    cors_allowed_origins: list[str] | str = ["http://localhost:3000"]
 
     # TwelveData API
     twelvedata_api_key: str = ""
@@ -33,6 +34,13 @@ class Settings(BaseSettings):
     @property
     def is_production(self) -> bool:
         return self.app_env in ("production", "prod")
+
+    @property
+    def cors_origins(self) -> list[str]:
+        """Return parsed CORS origins as list."""
+        if isinstance(self.cors_allowed_origins, list):
+            return self.cors_allowed_origins
+        return [origin.strip() for origin in self.cors_allowed_origins.split(",") if origin.strip()]
 
     class Config:
         env_file = ".env"

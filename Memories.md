@@ -69,6 +69,17 @@
 - React Query stale time of 60000ms (1 min) balances freshness with API rate limits
 - ModeProvider defaults to 'guide' on error (safety-first principle)
 
+## Rate Limiting & Auth Gotchas
+- SlowAPI `@limiter.limit()` decorator REQUIRES `request: Request` as first parameter
+- Without request parameter, FastAPI fails to import the module entirely
+- Token blacklist uses Redis - tests need to mock `redis_client` or will fail silently with 401
+- Test fixture should patch `app.auth.blacklist.redis_client` with AsyncMock
+
+## Test Isolation Gotchas
+- conftest.py `client` fixture shares same app instance - state can leak
+- Rate limiter storage persists across tests - reset with `limiter.reset()` in fixture
+- Redis blacklist persists across tests - mock to avoid connection errors
+
 ## Test Counts by Prompt
 - Prompt 02 (Auth): 7 tests
 - Prompt 03 (Data): 12 tests
@@ -80,7 +91,25 @@
 - Prompt 09 (Risk): 19 tests
 - Prompt 10 (Execution): 28 tests
 - Prompt 11 (Journal): 22 tests
-- **Backend Total: 210 tests**
+- **Backend Total: 210 tests** ✅ All passing (verified 2025-12-25)
 - Prompt 12 (Frontend): 41 tests
-- **Frontend Total: 41 tests**
+- **Frontend Total: 41 tests** ✅ All passing
 - **Combined Total: 251 tests**
+
+## Security Implementation Notes
+- CSRF uses double-submit cookie pattern (cookie value must match X-CSRF-Token header)
+- Token blacklist stored in Redis with TTL = token expiry time
+- JTI (JWT ID) added to tokens for blacklist tracking
+- Rate limiting via SlowAPI with Redis storage
+- CORS origins configurable via `CORS_ALLOWED_ORIGINS` env var (comma-separated)
+
+## Multi-Tenancy Notes
+- Signal, Position, ExecutionOrder models now have `user_id` FK
+- All queries for these entities should filter by current user
+- Migration 011 adds user_id columns (nullable initially for existing data)
+
+## E2E Testing Notes
+- E2E tests require `--e2e` flag to run
+- Tests skip by default to avoid failures in CI without services
+- Use `pytest tests/e2e/ -v --e2e` to run E2E suite
+- E2E tests need running backend (localhost:8000) and services (Postgres, Redis)

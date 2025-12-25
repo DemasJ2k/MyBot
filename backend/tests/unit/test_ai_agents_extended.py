@@ -214,11 +214,12 @@ class TestStrategyAgent:
 class TestExecutionAgent:
     """Test suite for ExecutionAgent."""
 
-    async def test_execute_signal_guide_mode(self, test_db):
+    async def test_execute_signal_guide_mode(self, test_db, test_user):
         """Test signal execution in GUIDE mode (should simulate only)."""
         agent = ExecutionAgent(db=test_db, system_mode=SystemMode.GUIDE)
 
         signal = Signal(
+            user_id=test_user.id,
             strategy_name="NBB",
             symbol="EURUSD",
             signal_type=SignalType.LONG,
@@ -243,11 +244,12 @@ class TestExecutionAgent:
         # In GUIDE mode, no position should be created
         assert position is None
 
-    async def test_execute_signal_autonomous_mode(self, test_db):
+    async def test_execute_signal_autonomous_mode(self, test_db, test_user):
         """Test signal execution in AUTONOMOUS mode (should create position)."""
         agent = ExecutionAgent(db=test_db, system_mode=SystemMode.AUTONOMOUS)
 
         signal = Signal(
+            user_id=test_user.id,
             strategy_name="NBB",
             symbol="EURUSD",
             signal_type=SignalType.LONG,
@@ -277,11 +279,12 @@ class TestExecutionAgent:
         assert position.status == PositionStatus.OPEN
         assert position.position_size == 0.5
 
-    async def test_close_position_long(self, test_db):
+    async def test_close_position_long(self, test_db, test_user):
         """Test closing a long position."""
         agent = ExecutionAgent(db=test_db, system_mode=SystemMode.AUTONOMOUS)
 
         position = Position(
+            user_id=test_user.id,
             strategy_name="NBB",
             symbol="EURUSD",
             side=PositionSide.LONG,
@@ -307,11 +310,12 @@ class TestExecutionAgent:
         # PnL = (1.1100 - 1.1000) * 1.0 = 0.01 * 1.0 = 100 pips
         assert closed_position.realized_pnl == pytest.approx(0.01, rel=1e-6)
 
-    async def test_close_position_short(self, test_db):
+    async def test_close_position_short(self, test_db, test_user):
         """Test closing a short position."""
         agent = ExecutionAgent(db=test_db, system_mode=SystemMode.AUTONOMOUS)
 
         position = Position(
+            user_id=test_user.id,
             strategy_name="NBB",
             symbol="EURUSD",
             side=PositionSide.SHORT,

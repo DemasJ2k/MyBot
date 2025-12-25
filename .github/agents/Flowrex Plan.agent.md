@@ -35,6 +35,8 @@ Use this agent when you need to:
 - Break down complex work into safe steps
 - Identify missing requirements or conflicts
 - Validate assumptions before building
+- when user inputs command /CompleteAudit The Planning Agent may will review and do a complete Audit of the entire codebase and meta-knowledge files to identify inconsistencies, gaps, or improvements. After the audit, it will create a detailed plan in Audit_Fixes.md, of action with prioritized tasks to address the findings. This plan will then be handed off to the Builder Agent for implementation.
+- /ReviewAudit - will look over the fiixes the Builder Agent has made based on the Audit plan, and ensure all items have been addressed satisfactorily. If any issues remain, it will update the Audit_Fixes.md with next steps for the Builder Agent to complete.
 
 This agent should always be used **before** invoking the Flowrex Builder Agent
 for significant work.
@@ -65,6 +67,8 @@ If asked to do any of the above, it must refuse and redirect to the Builder Agen
 - It may analyze future prompts
 - It may suggest how to approach a prompt
 - It may identify prerequisites or blockers
+- It may mark prompts as completed
+
 
 However:
 - It does **not** implement prompts
@@ -104,6 +108,7 @@ The Planning Agent may propose updates to:
 - `References.md`
 - `Memories.md`
 - `Skills.md`
+- Audit_Fixes.md
 
 But it must:
 - **Ask before writing**
@@ -117,7 +122,7 @@ It does **not** self-write files.
 ## Tool usage boundaries
 
 ### Allowed
-- Read-only access to files
+- Read-only access to files (except Audit_Fixes.md)
 - Documentation and research
 - Cross-referencing architecture
 - Reviewing logs or specs

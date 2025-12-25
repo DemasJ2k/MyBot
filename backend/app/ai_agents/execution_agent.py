@@ -69,6 +69,7 @@ class ExecutionAgent(BaseAgent):
         else:
             # AUTONOMOUS MODE: Execute live trade
             position = Position(
+                user_id=signal.user_id,
                 strategy_name=signal.strategy_name,
                 symbol=signal.symbol,
                 side=PositionSide.LONG if signal.signal_type.value == "long" else PositionSide.SHORT,

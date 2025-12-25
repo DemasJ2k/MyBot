@@ -140,3 +140,19 @@
 - @testing-library/react for component testing
 - Mock service layer for isolated tests
 - Test file organization by component type
+
+## Frontend Charting (Recharts)
+- LineChart for equity curves and time series data
+- BarChart for trade distribution and comparisons
+- PieChart for allocation and distribution views
+- AreaChart for cumulative metrics visualization
+- ResponsiveContainer for mobile-friendly charts
+- Chart data transformation patterns (API → chart format)
+- TypeScript typing for chart components and data
+- Custom tooltips and legend formatting
+
+## Multi-Tenancy Testing
+- Fixture-based test user creation for foreign key constraints
+- Redis mock for token blacklist in tests
+- Rate limiter reset between test runs
+- User ID propagation through Signal → Position → ExecutionOrder chain

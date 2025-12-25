@@ -150,14 +150,20 @@ export function Header({ title, children }: HeaderProps) {
 interface PageContainerProps {
   children: React.ReactNode;
   title?: string;
+  description?: string;
   actions?: React.ReactNode;
 }
 
-export function PageContainer({ children, title, actions }: PageContainerProps) {
+export function PageContainer({ children, title, description, actions }: PageContainerProps) {
   return (
     <div className="lg:pl-64 min-h-screen bg-gray-50 dark:bg-gray-950">
       <Header title={title}>{actions}</Header>
-      <main className="p-6">{children}</main>
+      <main className="p-6">
+        {description && (
+          <p className="text-gray-500 dark:text-gray-400 -mt-2 mb-6">{description}</p>
+        )}
+        {children}
+      </main>
     </div>
   );
 }

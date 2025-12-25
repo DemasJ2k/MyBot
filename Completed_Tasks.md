@@ -414,3 +414,118 @@
 - npm run build: Successful compilation, 4 pages generated
 - npm test: All 41 tests passing
 - Backend tests verified: All 210 tests still passing
+
+## 2025-12-25 - Project Audit & Fixes
+Performed comprehensive project audit and applied recommended fixes:
+
+### Completed Fixes:
+1. **Jest TypeScript Types** ✅
+   - Added `@types/jest` to frontend devDependencies
+   - Resolved TypeScript errors in test files
+
+2. **Auth Payload Mismatch** ✅
+   - Fixed frontend login to send `email` (not `username`)
+   - Now matches backend `UserLogin` schema
+
+3. **CSRF Token Validation** ✅
+   - Implemented double-submit cookie pattern
+   - Added `_get_csrf_cookie()` and `_get_csrf_header()` helpers
+   - Validates cookie token matches header token
+
+4. **Environment-Driven CORS** ✅
+   - Added `cors_allowed_origins` setting to config
+   - Created `cors_origins` property that parses comma-separated values
+   - Removed hardcoded localhost origin
+
+5. **Datetime Deprecation Fix** ✅
+   - Replaced `datetime.utcnow()` with `datetime.now(timezone.utc)`
+   - Updated JWT token creation functions
+
+6. **Debug Print Removal** ✅
+   - Removed `print(result.metrics.summary())` from backtest engine
+   - Replaced with comment about using structured logging
+
+7. **Token Blacklist for Logout** ✅
+   - Created `backend/app/auth/blacklist.py` with Redis-backed blacklist
+   - Tokens blacklisted by JTI with TTL-based cleanup
+   - Logout now invalidates both access and refresh tokens
+
+8. **Auth Rate Limiting** ✅
+   - Added `@limiter.limit("10/minute")` to login endpoint
+   - Added `@limiter.limit("30/minute")` to refresh endpoint
+   - Created centralized rate limiter in `core/rate_limiter.py`
+
+9. **Multi-Tenant Associations** ✅
+   - Added `user_id` foreign key to Signal model
+   - Added `user_id` foreign key to Position model
+   - Added `user_id` foreign key to ExecutionOrder model
+   - Created Alembic migration 011 for user_id columns
+
+10. **E2E Test Scaffolding** ✅
+    - Created `tests/e2e/` directory structure
+    - Added conftest.py with e2e fixtures (e2e_client, authenticated_client)
+    - Created test_auth_flow.py for auth lifecycle testing
+    - Created test_trading_flow.py for trading workflow testing
+    - Created test_health.py for infrastructure tests
+    - Added `--e2e` pytest flag to run E2E tests
+    - E2E tests skip by default (require running services)
+
+## 2025-12-25 - Prompt 13: UI Dashboards
+- Created 10 dashboard pages in frontend/app:
+  - Main dashboard (app/page.tsx): Stats grid, recent signals
+  - Strategies page: Strategy list and performance
+  - Backtest page: Backtest configuration and results
+  - Optimization page: Optimization job management
+  - Signals page: Signal monitoring and history
+  - Execution page: Order execution tracking
+  - Performance page: Charts and metrics
+  - Journal page: Trading journal entries
+  - AI Chat page: AI assistant interface
+  - Settings page: User preferences and system config
+- Integrated Recharts for data visualization:
+  - LineChart, BarChart, PieChart, AreaChart components
+  - Responsive containers for mobile/desktop
+  - TypeScript strict mode typing
+- Frontend build successful (npm run build)
+- All 41 frontend tests passing
+- Backend tests verified: 210 passing
+
+## 2025-12-25 - Audit Fix Session (C1 Critical Fix)
+Applied fixes from Audit_Fixes.md:
+
+### Critical Fix C1: Rate Limiter Request Parameter ✅
+- **Problem:** `@limiter.limit()` decorator requires `request: Request` parameter
+- **Files Fixed:**
+  - backend/app/api/v1/auth_routes.py
+    - Added `Request` import from fastapi
+    - Added `HTTPAuthorizationCredentials` import from fastapi.security
+    - Added `request: Request` parameter to `login()` function
+    - Added `request: Request` parameter to `refresh()` function
+- **Result:** Backend imports work, tests can be collected
+
+### Multi-Tenancy Test Fixes ✅
+- **Problem:** Migration 011 added `user_id` NOT NULL constraints, breaking 18+ tests
+- **Files Fixed:**
+  - backend/tests/conftest.py
+    - Added `User` and `hash_password` imports
+    - Added `test_user` fixture for multi-tenancy tests
+    - Added Redis mock for token blacklist (avoiding Redis dependency)
+    - Added rate limiter reset for test isolation
+  - backend/tests/unit/test_risk.py (6 tests)
+  - backend/tests/unit/test_execution.py (5 tests)
+  - backend/tests/unit/test_ai_agents.py (4 tests)
+  - backend/tests/unit/test_ai_agents_extended.py (4 tests)
+- **Result:** All tests now have `user_id` via `test_user` fixture
+
+### Production Code User ID Propagation ✅
+- **Problem:** `ExecutionAgent.execute_signal()` and `ExecutionEngine._create_execution_order()` 
+  created Position/ExecutionOrder without user_id
+- **Files Fixed:**
+  - backend/app/ai_agents/execution_agent.py - Added `user_id=signal.user_id`
+  - backend/app/execution/engine.py - Added `user_id=signal.user_id`
+- **Result:** Multi-tenant data properly propagates user ownership
+
+### Test Results After All Fixes:
+- **Backend:** 210 tests passing
+- **Frontend:** 41 tests passing
+- **Total:** 251 tests passing

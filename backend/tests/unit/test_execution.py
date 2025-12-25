@@ -369,10 +369,12 @@ class TestExecutionEngine:
     async def test_execution_guide_mode_blocks_execution(
         self,
         test_db: AsyncSession,
+        test_user,
     ):
         """Test GUIDE mode blocks actual execution."""
         # Create test signal inline
         signal = Signal(
+            user_id=test_user.id,
             strategy_name="test_strategy",
             symbol="AAPL",
             signal_type=SignalType.LONG,
@@ -424,10 +426,12 @@ class TestExecutionEngine:
     async def test_execution_cancelled_signal_rejected(
         self,
         test_db: AsyncSession,
+        test_user,
     ):
         """Test execution rejects cancelled signal."""
         # Create cancelled signal
         signal = Signal(
+            user_id=test_user.id,
             strategy_name="test_strategy",
             symbol="AAPL",
             signal_type=SignalType.LONG,
@@ -454,9 +458,11 @@ class TestExecutionEngine:
     async def test_execution_expired_signal_rejected(
         self,
         test_db: AsyncSession,
+        test_user,
     ):
         """Test execution rejects expired signal."""
         signal = Signal(
+            user_id=test_user.id,
             strategy_name="test_strategy",
             symbol="AAPL",
             signal_type=SignalType.LONG,
@@ -501,10 +507,11 @@ class TestOrderLifecycle:
     """Test order state management."""
     
     @pytest.mark.asyncio
-    async def test_cancel_pending_order(self, test_db: AsyncSession):
+    async def test_cancel_pending_order(self, test_db: AsyncSession, test_user):
         """Test cancelling a pending order."""
         # Create a pending order
         order = ExecutionOrder(
+            user_id=test_user.id,
             client_order_id="TEST-001",
             broker_type=BrokerType.PAPER,
             symbol="AAPL",
@@ -529,9 +536,10 @@ class TestOrderLifecycle:
         assert updated_order.status == OrderStatus.CANCELLED
     
     @pytest.mark.asyncio
-    async def test_cannot_cancel_filled_order(self, test_db: AsyncSession):
+    async def test_cannot_cancel_filled_order(self, test_db: AsyncSession, test_user):
         """Test cannot cancel an already filled order."""
         order = ExecutionOrder(
+            user_id=test_user.id,
             client_order_id="TEST-002",
             broker_type=BrokerType.PAPER,
             symbol="AAPL",

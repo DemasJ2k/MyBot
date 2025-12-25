@@ -359,6 +359,7 @@ class ExecutionEngine:
         side = OrderSide.BUY if signal.signal_type == SignalType.LONG else OrderSide.SELL
         
         order = ExecutionOrder(
+            user_id=signal.user_id,
             client_order_id=f"FX-{signal.id}-{uuid.uuid4().hex[:8]}",
             signal_id=signal.id,
             position_id=signal.position_id,

@@ -22,6 +22,10 @@ class ApiClient {
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }
+        const csrfToken = this.getCsrfToken();
+        if (csrfToken) {
+          config.headers['X-CSRF-Token'] = csrfToken;
+        }
         return config;
       },
       (error) => Promise.reject(error)
@@ -95,6 +99,12 @@ class ApiClient {
     }
   }
 
+  private getCsrfToken(): string | null {
+    if (typeof document === 'undefined') return null;
+    const match = document.cookie.match(/(?:^|; )csrftoken=([^;]*)/);
+    return match ? decodeURIComponent(match[1]) : null;
+  }
+
   clearTokens() {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('access_token');
@@ -124,7 +134,7 @@ class ApiClient {
   // Auth endpoints
   async login(email: string, password: string) {
     const response = await this.client.post('/auth/login', {
-      username: email,
+      email,
       password,
     });
 

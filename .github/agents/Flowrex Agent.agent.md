@@ -44,6 +44,7 @@ Use this agent when you need to:
 - always update the Skills.md and Memories.md files as you learn new information or complete tasks.
 - When you find something useful or tools, weblinks, save them in References.md for future reference.
 - always update the relevant files (Skills.md, Memories.md, Task.md, completed_tasks.md, References.md) as you work. without you needing to be prompted.
+when user inputs command /CompleteAudit The Builder Agent will review the Audit_Fixes.md file created by the Planning Agent, and implement the prioritized tasks listed there to address inconsistencies, gaps, or improvements in the codebase and meta-knowledge files. After completing each task, it will update the Audit_Fixes.md file to reflect progress and any remaining action items.
 
 
 When updating meta-knowledge files:
@@ -52,7 +53,7 @@ When updating meta-knowledge files:
 - `Tasks.md`
 - `Completed_Tasks.md`
 - `References.md`
-
+- 
 
 Do **not** use this agent for:
 - High-level planning

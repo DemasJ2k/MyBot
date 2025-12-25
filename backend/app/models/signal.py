@@ -7,6 +7,7 @@ from app.models.base import Base, TimestampMixin
 
 if TYPE_CHECKING:
     from app.models.position import Position
+    from app.models.user import User
 
 
 class SignalType(str, enum.Enum):
@@ -27,6 +28,7 @@ class Signal(Base, TimestampMixin):
     __tablename__ = "signals"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
     strategy_name: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
     symbol: Mapped[str] = mapped_column(String(20), nullable=False, index=True)
     signal_type: Mapped[SignalType] = mapped_column(SQLEnum(SignalType), nullable=False)
@@ -59,10 +61,12 @@ class Signal(Base, TimestampMixin):
     # Relationships
     position_id: Mapped[Optional[int]] = mapped_column(ForeignKey("positions.id"), nullable=True)
     position: Mapped[Optional["Position"]] = relationship("Position", back_populates="signal")
+    user: Mapped["User"] = relationship("User", lazy="selectin")
 
     __table_args__ = (
         Index("ix_signal_strategy_status", "strategy_name", "status"),
         Index("ix_signal_symbol_status", "symbol", "status"),
+        Index("ix_signal_user_id", "user_id"),
     )
 
     def __repr__(self) -> str:

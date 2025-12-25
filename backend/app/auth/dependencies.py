@@ -6,6 +6,7 @@ from jose import JWTError
 from app.database import get_db
 from app.models.user import User
 from app.auth.jwt import decode_token
+from app.auth.blacklist import is_token_blacklisted
 
 security = HTTPBearer()
 
@@ -19,8 +20,11 @@ async def get_current_user(
         detail="Invalid credentials",
         headers={"WWW-Authenticate": "Bearer"}
     )
+    token = credentials.credentials
     try:
-        payload = decode_token(credentials.credentials)
+        if await is_token_blacklisted(token):
+            raise exception
+        payload = decode_token(token)
         if payload.get("type") != "access":
             raise exception
         user_id = payload.get("sub")
