@@ -178,3 +178,20 @@
 - Python model instantiation does NOT apply these defaults
 - Tests must explicitly provide all required field values
 - Use helper methods to create model instances with explicit defaults
+
+## CROSSCHECK Validation
+- Architectural rule enforcement via automated tests
+- Hard risk constant validation (existence and safe values)
+- Execution engine sole trade executor verification
+- Journal entry immutability checks
+- Mode enforcement validation
+- Audit trail compliance verification
+- Multi-tenant foreign key validation
+- Safety mechanism verification (emergency shutdown, rate limiting)
+
+## CI/CD Testing
+- GitHub Actions workflow for automated testing
+- Parallel job execution (unit, crosscheck, frontend)
+- PostgreSQL and Redis service containers for integration tests
+- Security scanning with safety (Python) and npm audit
+- Gate job pattern (all-tests-passed) to ensure quality
