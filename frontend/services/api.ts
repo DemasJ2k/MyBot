@@ -159,17 +159,6 @@ class ApiClient {
     return response.data;
   }
 
-  // System mode
-  async getSystemMode() {
-    const response = await this.client.get('/ai/mode');
-    return response.data;
-  }
-
-  async setSystemMode(mode: 'guide' | 'autonomous') {
-    const response = await this.client.put('/ai/mode', { mode });
-    return response.data;
-  }
-
   // Strategies
   async listStrategies() {
     const response = await this.client.get('/strategies/');
@@ -273,16 +262,6 @@ class ApiClient {
       position_size: positionSize,
       broker_type: brokerType,
     });
-    return response.data;
-  }
-
-  async getExecutionMode() {
-    const response = await this.client.get('/execution/mode');
-    return response.data;
-  }
-
-  async setExecutionMode(mode: 'guide' | 'autonomous') {
-    const response = await this.client.post('/execution/mode', { mode });
     return response.data;
   }
 

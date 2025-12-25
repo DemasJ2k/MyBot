@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { apiClient } from '@/services/api';
 import { useMode } from '@/providers/ModeProvider';
 import { AlertTriangle, CheckCircle, Info, Shield, Settings, Clock, Bell, Lock } from 'lucide-react';

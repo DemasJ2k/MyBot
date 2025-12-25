@@ -14,7 +14,17 @@ export function useSetExecutionMode() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (mode: 'guide' | 'autonomous') => apiClient.setExecutionMode(mode),
+    mutationFn: ({ 
+      mode, 
+      options 
+    }: { 
+      mode: 'simulation' | 'paper' | 'live';
+      options?: {
+        reason?: string;
+        password?: string;
+        confirmed?: boolean;
+      };
+    }) => apiClient.setExecutionMode(mode, options),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['execution-mode'] });
     },
