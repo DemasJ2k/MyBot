@@ -244,7 +244,7 @@ class TestServiceLayerUsage:
         model_imports = 0
 
         for route_file in routes_path.glob("*_routes.py"):
-            with open(route_file, "r") as f:
+            with open(route_file, "r", encoding="utf-8") as f:
                 content = f.read()
 
             # Count imports

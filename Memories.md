@@ -93,10 +93,11 @@
 - Prompt 11 (Journal): 22 tests
 - Prompt 14 (Settings): 33 tests
 - Prompt 15 (CROSSCHECK): 12 tests
-- **Backend Total: 255 tests** ✅ All passing
+- Prompt 16 (Simulation): 38 tests
+- **Backend Total: 293 tests** ✅ All passing
 - Prompt 12 (Frontend): 41 tests
 - **Frontend Total: 41 tests** ✅ All passing
-- **Combined Total: 296 tests**
+- **Combined Total: 334 tests**
 
 ## Security Implementation Notes
 - CSRF uses double-submit cookie pattern (cookie value must match X-CSRF-Token header)
@@ -141,3 +142,15 @@
   - Use simple `create_async_engine("sqlite+aiosqlite:///:memory:")` without NullPool
 - GitHub Actions workflow gates merges on test success
 - Security scanning with `safety` (Python) and `npm audit` (frontend)
+
+## Prompt 16 (Simulation & Demo Mode) Implementation Notes
+- Three execution modes: SIMULATION (default/safest), PAPER, LIVE
+- SIMULATION mode uses SimulatedBrokerAdapter with database-backed SimulationAccount
+- LIVE mode requires: password verification + explicit confirmation + reason (all three)
+- ExecutionModeService handles mode transitions with full safety validation
+- Mode changes create ExecutionModeAudit records with IP, user agent, context
+- SimulationAccount tracks: balance, equity, margin, P&L, win rate, slippage settings
+- SimulationPosition tracks virtual positions separately from live
+- Frontend components provide visual mode indication and confirmation dialogs
+- Migration 013 adds: simulation_accounts, execution_mode_audit, simulation_positions tables
+- File reading in crosscheck tests needs `encoding="utf-8"` for Unicode compatibility

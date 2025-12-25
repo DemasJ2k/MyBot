@@ -472,6 +472,68 @@ class ApiClient {
     const response = await this.client.delete(`/settings/preferences/favorites/symbols/${symbol}`);
     return response.data;
   }
+
+  // ============= Execution Mode API =============
+  
+  async getExecutionMode() {
+    const response = await this.client.get('/execution-mode');
+    return response.data;
+  }
+
+  async setExecutionMode(
+    mode: 'simulation' | 'paper' | 'live',
+    options?: {
+      reason?: string;
+      password?: string;
+      confirmed?: boolean;
+    }
+  ) {
+    const response = await this.client.post('/execution-mode', {
+      mode,
+      reason: options?.reason,
+      password: options?.password,
+      confirmed: options?.confirmed ?? false,
+    });
+    return response.data;
+  }
+
+  async getSimulationAccount() {
+    const response = await this.client.get('/execution-mode/simulation/account');
+    return response.data;
+  }
+
+  async resetSimulationAccount() {
+    const response = await this.client.post('/execution-mode/simulation/reset');
+    return response.data;
+  }
+
+  async updateSimulationSettings(settings: {
+    initial_balance?: number;
+    slippage_pips?: number;
+    commission_per_lot?: number;
+    latency_ms?: number;
+    fill_probability?: number;
+  }) {
+    const response = await this.client.patch('/execution-mode/simulation/settings', settings);
+    return response.data;
+  }
+
+  async getSimulationPositions() {
+    const response = await this.client.get('/execution-mode/simulation/positions');
+    return response.data;
+  }
+
+  async getExecutionModeAudit(limit = 50) {
+    const response = await this.client.get('/execution-mode/audit', {
+      params: { limit },
+    });
+    return response.data;
+  }
+
+  async checkModeSafety() {
+    const response = await this.client.get('/execution-mode/safety-check');
+    return response.data;
+  }
 }
 
 export const apiClient = new ApiClient();

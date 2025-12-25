@@ -45,6 +45,13 @@ class SystemSettings(Base):
         nullable=False
     )
 
+    # Execution Mode (SIMULATION/PAPER/LIVE)
+    execution_mode: Mapped[str] = mapped_column(
+        String(20),
+        default="simulation",
+        nullable=False
+    )
+
     # Broker Configuration
     broker_type: Mapped[BrokerType] = mapped_column(
         SQLEnum(BrokerType), 

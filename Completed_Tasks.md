@@ -674,3 +674,92 @@ Applied fixes from Audit_Fixes.md:
   - Backend: 255 tests passing (243 unit + 12 CROSSCHECK)
   - Frontend: 41 tests passing
   - Total: 296 tests passing
+
+## 2025-01-XX - Prompt 16: Simulation and Demo Mode
+- Created ExecutionMode enum (SIMULATION/PAPER/LIVE):
+  - SIMULATION: Default/safest, virtual account, no real money
+  - PAPER: Broker's paper trading account
+  - LIVE: Real money trading, requires explicit confirmation
+- Created SimulationAccount model:
+  - user_id foreign key (one simulation account per user)
+  - balance, equity, margin_used, margin_available tracking
+  - initial_balance configurable (default $10,000)
+  - Simulation parameters: slippage_pips, commission_per_lot, latency_ms, fill_probability
+  - Trading statistics: total_trades, winning_trades, total_pnl
+  - reset() method to restore initial state
+  - record_trade() for tracking P&L and win rate
+  - update_equity() for unrealized P&L calculation
+- Created SimulationPosition model:
+  - Tracks virtual positions separately from live
+  - symbol, side (long/short), quantity, entry_price, current_price
+  - stop_loss, take_profit for risk management
+  - unrealized_pnl calculation
+  - check_stop_loss(), check_take_profit() trigger checking
+- Created ExecutionModeAudit model:
+  - Full audit trail for mode changes
+  - user_id, old_mode, new_mode, reason
+  - ip_address, user_agent for context
+  - confirmation_required, password_verified flags
+  - had_open_positions, positions_cancelled tracking
+- Created SimulatedBrokerAdapter:
+  - Extends BaseBrokerAdapter interface
+  - Database-backed persistent state via SimulationAccount
+  - set_price(), set_mid_price() for price simulation
+  - Realistic execution with slippage, latency, fill probability
+  - Full position lifecycle management
+  - update_prices() with automatic SL/TP triggering
+  - reset_account() to start fresh
+- Created ExecutionModeService:
+  - get_current_mode() reads from SystemSettings
+  - change_mode() with full safety validation:
+    - LIVE requires password_verified=True
+    - LIVE requires confirmed=True
+    - LIVE requires reason (audit trail)
+  - get_simulation_account() / reset_simulation_account()
+  - update_simulation_settings() with parameter validation
+  - get_mode_audit_history() for compliance
+  - validate_mode_for_action() for mode-restricted operations
+  - is_live_trading_enabled() / is_simulation_mode() helpers
+  - Custom exceptions: ExecutionModeError, LiveModeConfirmationRequired, PasswordVerificationRequired
+- Created execution_mode_routes.py API:
+  - GET /execution-mode: Get current mode
+  - POST /execution-mode: Change mode (with safety requirements)
+  - GET /execution-mode/simulation/account: Get simulation stats
+  - POST /execution-mode/simulation/reset: Reset simulation account
+  - PATCH /execution-mode/simulation/settings: Update simulation parameters
+  - GET /execution-mode/simulation/positions: List virtual positions
+  - GET /execution-mode/audit: Get mode change history
+  - GET /execution-mode/safety-check: Check mode safety status
+- Updated router.py to include execution_mode_routes
+- Created migration 013_add_simulation_tables.py:
+  - simulation_accounts table with all account fields
+  - execution_mode_audit table for audit trail
+  - simulation_positions table for virtual positions
+  - Added execution_mode column to system_settings
+  - Indexes on user_id, created_at, symbol columns
+- Added execution mode API methods to frontend services/api.ts:
+  - getExecutionMode(), setExecutionMode()
+  - getSimulationAccount(), resetSimulationAccount()
+  - updateSimulationSettings(), getSimulationPositions()
+  - getExecutionModeAudit(), checkModeSafety()
+- Created ExecutionModeIndicator.tsx frontend components:
+  - useExecutionMode() hook for mode state management
+  - ExecutionModeIndicator: Visual mode badge (blue/yellow/red)
+  - ExecutionModeWarning: Warning banner for live trading
+  - ExecutionModeSelector: Mode switch with live confirmation dialog
+  - SimulationAccountCard: Account stats display with reset button
+- Updated layout/index.ts to export new components
+- Created test_execution_mode.py with 38 unit tests:
+  - TestExecutionModeEnum: Enum validation (4 tests)
+  - TestSimulationAccountModel: Account operations (7 tests)
+  - TestSimulationPositionModel: Position tracking (6 tests)
+  - TestSimulatedBrokerAdapter: Adapter functionality (5 tests)
+  - TestExecutionModeService: Service operations (9 tests)
+  - TestSafetyChecks: Safety validation (3 tests)
+  - TestAuditTrail: Audit functionality (1 test)
+  - TestSystemSettingsIntegration: Settings integration (1 test)
+- Fixed encoding issue in crosscheck test (added encoding="utf-8")
+- Test verification:
+  - Backend: 293 tests passing (281 unit + 12 CROSSCHECK)
+  - Frontend: 41 tests passing
+  - Total: 334 tests passing

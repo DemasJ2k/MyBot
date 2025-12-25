@@ -195,3 +195,31 @@
 - PostgreSQL and Redis service containers for integration tests
 - Security scanning with safety (Python) and npm audit
 - Gate job pattern (all-tests-passed) to ensure quality
+## Simulation and Demo Mode (Prompt 16)
+- ExecutionMode enum: SIMULATION (default), PAPER, LIVE
+- SimulationAccount model with virtual balance tracking:
+  - Initial balance configurable (default $10,000)
+  - Balance, equity, margin tracking
+  - Simulation parameters: slippage_pips, commission_per_lot, latency_ms, fill_probability
+  - Trading statistics: total_trades, winning_trades, total_pnl, win_rate
+  - Account reset functionality
+- SimulationPosition model for virtual positions:
+  - Position tracking separate from live
+  - SL/TP trigger checking
+  - Unrealized P&L calculation
+- SimulatedBrokerAdapter extends BaseBrokerAdapter:
+  - Database-backed persistent state
+  - Realistic execution simulation (latency, slippage, fill probability)
+  - Bid/ask spread simulation
+  - Full position lifecycle management
+- ExecutionModeService for mode transitions:
+  - Live mode requires: password verification + explicit confirmation + reason
+  - Safety-first design: SIMULATION is always default
+  - Full audit trail for mode changes (ExecutionModeAudit)
+  - validate_mode_for_action() for mode-restricted operations
+- Frontend components:
+  - ExecutionModeIndicator (visual mode display)
+  - ExecutionModeSelector (mode switching with confirmation dialog)
+  - ExecutionModeWarning (live trading warning banner)
+  - SimulationAccountCard (account stats display)
+- Data isolation: Simulation positions stored separately from live
