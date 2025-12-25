@@ -611,3 +611,66 @@ Applied fixes from Audit_Fixes.md:
   - Backend: 243 tests passing (210 + 33 new)
   - Frontend: 41 tests passing
   - Total: 284 tests passing
+
+## 2025-12-25 - Prompt 15: Testing and Validation
+- Created comprehensive testing framework following Test Pyramid architecture
+- Created pytest.ini configuration:
+  - asyncio_mode = auto for async test support
+  - Custom markers: unit, integration, e2e, slow, crosscheck
+  - Strict markers and short tracebacks
+  - Filter deprecation warnings from jose, passlib, sqlalchemy
+- Created .coveragerc configuration:
+  - Source coverage from app/ directory
+  - Omits tests, migrations, venv, alembic
+  - 80% fail-under threshold
+  - HTML and XML report generation
+  - Excludes TYPE_CHECKING, abstract methods, repr
+- Enhanced backend conftest.py:
+  - Added test_db and db fixture aliases for consistency
+  - Added authenticated_client fixture with automatic login
+  - Added mock_twelvedata_client fixture
+  - Added sample_candle_data fixture for strategy tests
+  - Added mock_broker fixture for execution tests
+  - Enhanced marker configuration (unit, integration, e2e, slow, crosscheck)
+- Created CROSSCHECK validation tests (tests/crosscheck/test_architecture_rules.py):
+  - TestArchitectureRules:
+    - test_hard_risk_constants_exist: Verifies required risk constants
+    - test_hard_risk_constants_values_are_safe: Validates safe constant values
+    - test_execution_engine_sole_trade_executor: Ensures only execution engine submits trades
+    - test_journal_entries_immutable: Verifies no update/delete methods on JournalEntry
+  - TestModeEnforcement:
+    - test_mode_enum_exists: Verifies SystemMode GUIDE/AUTONOMOUS enum
+    - test_execution_checks_mode: Ensures execution engine checks mode
+  - TestServiceLayerUsage:
+    - test_routes_use_service_layer: Validates routes use services
+  - TestAuditTrailCompliance:
+    - test_settings_audit_exists: Verifies SettingsAudit model
+    - test_risk_decisions_logged: Verifies RiskDecision model
+  - TestDatabaseConstraints:
+    - test_user_foreign_keys_exist: Validates multi-tenant FK columns
+  - TestSafetyMechanisms:
+    - test_emergency_shutdown_exists: Verifies emergency shutdown
+    - test_rate_limiting_configured: Ensures auth rate limiting
+  - All 12 CROSSCHECK tests passing
+- Enhanced frontend jest.config.js:
+  - Added services/ and providers/ to coverage collection
+  - Added coverage thresholds: 60% branches, 65% functions, 70% lines/statements
+  - Added verbose output
+- Enhanced frontend jest.setup.js:
+  - Added sessionStorage mock
+  - Added matchMedia mock for responsive tests
+  - Added ResizeObserver mock
+  - Added IntersectionObserver mock
+  - Enhanced console.error suppression (act warnings)
+  - Added afterEach cleanup for mock clearing
+- Created GitHub Actions workflow (.github/workflows/test.yml):
+  - backend-unit-tests: Runs pytest on unit tests
+  - backend-crosscheck-tests: Runs CROSSCHECK validation
+  - backend-integration-tests: Runs with PostgreSQL and Redis services
+  - frontend-tests: Runs Jest, type checking, linting, build
+  - security-scan: Runs safety and npm audit
+  - all-tests-passed: Gate job to verify all tests pass
+- Test verification:
+  - Backend: 255 tests passing (243 unit + 12 CROSSCHECK)
+  - Frontend: 41 tests passing
+  - Total: 296 tests passing

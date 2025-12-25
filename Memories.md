@@ -92,10 +92,11 @@
 - Prompt 10 (Execution): 28 tests
 - Prompt 11 (Journal): 22 tests
 - Prompt 14 (Settings): 33 tests
-- **Backend Total: 243 tests** ✅ All passing
+- Prompt 15 (CROSSCHECK): 12 tests
+- **Backend Total: 255 tests** ✅ All passing
 - Prompt 12 (Frontend): 41 tests
 - **Frontend Total: 41 tests** ✅ All passing
-- **Combined Total: 284 tests**
+- **Combined Total: 296 tests**
 
 ## Security Implementation Notes
 - CSRF uses double-submit cookie pattern (cookie value must match X-CSRF-Token header)
@@ -125,3 +126,18 @@
   - Use helper methods like `_create_settings()` to provide defaults in tests
 - UserPreferences stores favorite_strategies and favorite_symbols as JSON arrays
 - Settings API returns `can_switch` boolean to indicate if mode switch is currently allowed
+
+## Prompt 15 (Testing & Validation) Implementation Notes
+- Test Pyramid: 70% unit, 20% integration, 10% E2E
+- pytest.ini configures markers: unit, integration, e2e, slow, crosscheck
+- .coveragerc sets 80% minimum coverage threshold
+- CROSSCHECK tests validate architectural rules:
+  - Hard risk constants exist and have safe values
+  - Execution engine is sole trade executor
+  - Journal entries are immutable (no update/delete methods)
+  - Mode enforcement is in place
+  - Audit trail models exist
+- NullPool breaks in-memory SQLite (each connection is separate DB)
+  - Use simple `create_async_engine("sqlite+aiosqlite:///:memory:")` without NullPool
+- GitHub Actions workflow gates merges on test success
+- Security scanning with `safety` (Python) and `npm audit` (frontend)

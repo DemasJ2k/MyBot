@@ -19,8 +19,26 @@ const customJestConfig = {
     'components/**/*.{js,jsx,ts,tsx}',
     'hooks/**/*.{js,jsx,ts,tsx}',
     'lib/**/*.{js,jsx,ts,tsx}',
+    'services/**/*.{js,jsx,ts,tsx}',
+    'providers/**/*.{js,jsx,ts,tsx}',
     '!**/*.d.ts',
+    '!**/node_modules/**',
+    '!**/.next/**',
   ],
+  coverageThreshold: {
+    global: {
+      branches: 60,
+      functions: 65,
+      lines: 70,
+      statements: 70,
+    },
+  },
+  testMatch: [
+    '**/__tests__/**/*.(test|spec).[jt]s?(x)',
+    '**/?(*.)+(spec|test).[jt]s?(x)',
+  ],
+  // Display options
+  verbose: true,
 };
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async

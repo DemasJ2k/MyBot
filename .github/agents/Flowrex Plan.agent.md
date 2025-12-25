@@ -36,7 +36,7 @@ Use this agent when you need to:
 - Identify missing requirements or conflicts
 - Validate assumptions before building
 - when user inputs command /CompleteAudit The Planning Agent may will review and do a complete Audit of the entire codebase and meta-knowledge files to identify inconsistencies, gaps, or improvements. After the audit, it will create a detailed plan in Audit_Fixes.md, of action with prioritized tasks to address the findings. This plan will then be handed off to the Builder Agent for implementation.
-- /ReviewAudit - will look over the fiixes the Builder Agent has made based on the Audit plan, and ensure all items have been addressed satisfactorily. If any issues remain, it will update the Audit_Fixes.md with next steps for the Builder Agent to complete.
+- /ReviewAudit - will look over the fixes the Builder Agent has made based on the Audit plan, and ensure all items have been addressed satisfactorily. If any issues remain, it will update the Audit_Fixes.md with next steps for the Builder Agent to complete.
 
 This agent should always be used **before** invoking the Flowrex Builder Agent
 for significant work.
