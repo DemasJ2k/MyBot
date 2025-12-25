@@ -181,7 +181,7 @@ async def run_backtest(
     stmt = (
         select(Candle)
         .where(Candle.symbol == request.symbol)
-        .where(Candle.timeframe == request.timeframe)
+        .where(Candle.interval == request.timeframe)  # Candle uses 'interval' not 'timeframe'
         .where(Candle.timestamp >= request.start_date)
         .where(Candle.timestamp <= request.end_date)
         .order_by(Candle.timestamp.asc())

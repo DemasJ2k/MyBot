@@ -15,6 +15,38 @@ logger = logging.getLogger(__name__)
 class StrategyManager:
     """Manages all trading strategies and signal generation."""
 
+    # Class-level registry of available strategy classes
+    _strategy_classes: Dict[str, Type[BaseStrategy]] = {}
+    _registered: bool = False
+
+    @classmethod
+    def _ensure_registered(cls) -> None:
+        """Ensure strategies are registered at class level."""
+        if not cls._registered:
+            strategy_classes: List[Type[BaseStrategy]] = [
+                NBBStrategy,
+                JadeCapStrategy,
+                FabioStrategy,
+                ToriStrategy,
+            ]
+            for strategy_class in strategy_classes:
+                # Get name from class default config
+                name = strategy_class.__name__.replace("Strategy", "").lower()
+                if hasattr(strategy_class, "get_default_config"):
+                    try:
+                        config = strategy_class.get_default_config(strategy_class)
+                        name = config.name
+                    except Exception:
+                        pass
+                cls._strategy_classes[name] = strategy_class
+            cls._registered = True
+
+    @classmethod
+    def get_available_strategies(cls) -> Dict[str, Type[BaseStrategy]]:
+        """Get available strategy classes (without requiring a db session)."""
+        cls._ensure_registered()
+        return cls._strategy_classes.copy()
+
     def __init__(self, db: AsyncSession):
         self.db = db
         self.strategies: Dict[str, BaseStrategy] = {}

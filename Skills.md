@@ -14,7 +14,7 @@
 - AsyncMock and MagicMock for unit testing
 - In-memory SQLite for isolated auth tests
 - Cross-database compatible models (PostgreSQL + SQLite)
-- 296 unit tests covering all components (255 backend + 41 frontend)
+- 351 tests total: 297 backend + 41 frontend + 13 E2E (1 skipped)
 - Test Pyramid architecture: 70% unit, 20% integration, 10% E2E
 - CROSSCHECK architectural validation tests
 - Coverage configuration with 80% threshold
@@ -223,3 +223,17 @@
   - ExecutionModeWarning (live trading warning banner)
   - SimulationAccountCard (account stats display)
 - Data isolation: Simulation positions stored separately from live
+
+## E2E Testing Skills
+- ASGI transport for standalone E2E testing (no server required)
+- Dual-mode fixtures: real server mode vs ASGI transport mode
+- Test data isolation with in-memory databases
+- Handling graceful skips for missing external data
+- JSON vs form-data authentication handling
+- Test assertion design for multiple valid API responses
+
+## Debugging Skills
+- Identifying field name mismatches (e.g., `timeframe` vs `interval`)
+- Tracing Pydantic validation errors to missing class methods
+- Root cause analysis for 500 errors in test environments
+- Fixture scope management for test isolation

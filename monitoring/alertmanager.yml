@@ -1,0 +1,152 @@
+# Flowrex Alertmanager Configuration
+# Prompt 18 - Production Deployment
+#
+# Routes alerts to appropriate receivers based on severity and type
+
+global:
+  # How long to wait before sending a notification again if it has already been sent
+  resolve_timeout: 5m
+  
+  # SMTP settings for email alerts (configure as needed)
+  # smtp_smarthost: 'smtp.gmail.com:587'
+  # smtp_from: 'alerts@flowrex.app'
+  # smtp_auth_username: 'alerts@flowrex.app'
+  # smtp_auth_password: '${SMTP_PASSWORD}'
+
+  # Slack settings (configure via environment variables)
+  slack_api_url: '${SLACK_WEBHOOK_URL}'
+
+# The root route - all alerts start here
+route:
+  # Group alerts by these labels
+  group_by: ['alertname', 'severity', 'service']
+  
+  # How long to wait to buffer alerts before sending
+  group_wait: 30s
+  
+  # How long to wait before sending notification about new alerts in a group
+  group_interval: 5m
+  
+  # How long to wait before sending a notification again
+  repeat_interval: 4h
+  
+  # Default receiver
+  receiver: 'default-receiver'
+  
+  # Child routes for specific alert types
+  routes:
+    # Critical alerts - immediate notification
+    - match:
+        severity: critical
+      receiver: 'critical-receiver'
+      group_wait: 10s
+      repeat_interval: 1h
+      continue: false
+    
+    # Trading-related alerts
+    - match:
+        service: trading
+      receiver: 'trading-receiver'
+      group_wait: 30s
+      repeat_interval: 2h
+    
+    # Infrastructure alerts
+    - match_re:
+        service: (database|redis|nginx)
+      receiver: 'infrastructure-receiver'
+      group_wait: 1m
+      repeat_interval: 4h
+    
+    # Warning-level alerts
+    - match:
+        severity: warning
+      receiver: 'warning-receiver'
+      group_wait: 5m
+      repeat_interval: 12h
+
+# Receivers define where alerts go
+receivers:
+  # Default receiver for unmatched alerts
+  - name: 'default-receiver'
+    slack_configs:
+      - channel: '#flowrex-alerts'
+        send_resolved: true
+        title: '{{ template "slack.default.title" . }}'
+        text: '{{ template "slack.default.text" . }}'
+        color: '{{ if eq .Status "firing" }}{{ if eq .CommonLabels.severity "critical" }}danger{{ else if eq .CommonLabels.severity "warning" }}warning{{ else }}#439FE0{{ end }}{{ else }}good{{ end }}'
+
+  # Critical alerts - page on-call
+  - name: 'critical-receiver'
+    slack_configs:
+      - channel: '#flowrex-critical'
+        send_resolved: true
+        title: '🚨 CRITICAL: {{ .CommonLabels.alertname }}'
+        text: |
+          *Alert:* {{ .CommonLabels.alertname }}
+          *Severity:* {{ .CommonLabels.severity }}
+          *Service:* {{ .CommonLabels.service }}
+          *Description:* {{ .CommonAnnotations.description }}
+          *Runbook:* {{ .CommonAnnotations.runbook_url }}
+        color: 'danger'
+    # webhook_configs:
+    #   - url: 'https://pagerduty.com/...'
+    #     send_resolved: true
+
+  # Trading alerts
+  - name: 'trading-receiver'
+    slack_configs:
+      - channel: '#flowrex-trading'
+        send_resolved: true
+        title: '📈 Trading Alert: {{ .CommonLabels.alertname }}'
+        text: |
+          *Alert:* {{ .CommonLabels.alertname }}
+          *Description:* {{ .CommonAnnotations.description }}
+        color: '{{ if eq .Status "firing" }}warning{{ else }}good{{ end }}'
+
+  # Infrastructure alerts
+  - name: 'infrastructure-receiver'
+    slack_configs:
+      - channel: '#flowrex-infra'
+        send_resolved: true
+        title: '🔧 Infrastructure: {{ .CommonLabels.alertname }}'
+        text: |
+          *Alert:* {{ .CommonLabels.alertname }}
+          *Service:* {{ .CommonLabels.service }}
+          *Instance:* {{ .CommonLabels.instance }}
+          *Description:* {{ .CommonAnnotations.description }}
+        color: '{{ if eq .Status "firing" }}{{ if eq .CommonLabels.severity "critical" }}danger{{ else }}warning{{ end }}{{ else }}good{{ end }}'
+
+  # Warning alerts
+  - name: 'warning-receiver'
+    slack_configs:
+      - channel: '#flowrex-alerts'
+        send_resolved: true
+        title: '⚠️ Warning: {{ .CommonLabels.alertname }}'
+        text: '{{ .CommonAnnotations.description }}'
+        color: 'warning'
+
+# Inhibition rules - suppress certain alerts when others are firing
+inhibit_rules:
+  # If critical alert is firing, suppress warnings for same service
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'service']
+  
+  # If database is down, suppress all other database alerts
+  - source_match:
+      alertname: 'PostgresDown'
+    target_match_re:
+      alertname: 'Postgres.*'
+    equal: ['service']
+  
+  # If backend is down, suppress trading alerts
+  - source_match:
+      alertname: 'BackendDown'
+    target_match:
+      service: 'trading'
+
+# Templates for alert formatting
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'

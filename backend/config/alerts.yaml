@@ -1,0 +1,265 @@
+# Flowrex Prometheus Alerting Rules
+# Prompt 17 - Deployment Prep
+#
+# These rules define alerts for monitoring Flowrex in production.
+# Load this file into Prometheus with: rule_files: ["alerts.yaml"]
+
+groups:
+  # ==========================================================================
+  # Application Health Alerts
+  # ==========================================================================
+  - name: flowrex_application
+    interval: 30s
+    rules:
+      # High Error Rate
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(flowrex_http_requests_total{status=~"5.."}[5m])) 
+          / sum(rate(flowrex_http_requests_total[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "High HTTP error rate detected"
+          description: "Error rate is {{ $value | humanizePercentage }} over the last 5 minutes"
+          runbook_url: "https://docs.flowrex.io/runbooks/high-error-rate"
+
+      # High Latency
+      - alert: HighRequestLatency
+        expr: |
+          histogram_quantile(0.95, sum(rate(flowrex_http_request_duration_seconds_bucket[5m])) by (le)) > 2
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "High request latency detected"
+          description: "95th percentile latency is {{ $value }}s"
+
+      # Application Down
+      - alert: ApplicationDown
+        expr: up{job="flowrex-backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "Flowrex backend is down"
+          description: "The Flowrex backend instance {{ $labels.instance }} is not responding"
+
+  # ==========================================================================
+  # Database Alerts
+  # ==========================================================================
+  - name: flowrex_database
+    interval: 30s
+    rules:
+      # Database Connection Pool Exhaustion
+      - alert: DatabaseConnectionPoolLow
+        expr: flowrex_database_connections > 80
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "Database connection pool running low"
+          description: "Connection count: {{ $value }}"
+
+      # Database Slow Queries
+      - alert: DatabaseSlowQueries
+        expr: |
+          rate(pg_stat_activity_max_tx_duration{datname="flowrex"}[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "Slow database queries detected"
+          description: "Long-running transactions detected"
+
+  # ==========================================================================
+  # Trading Alerts
+  # ==========================================================================
+  - name: flowrex_trading
+    interval: 15s
+    rules:
+      # Trade Execution Failures
+      - alert: TradeExecutionFailures
+        expr: |
+          sum(rate(flowrex_trades_failed_total[5m])) > 0
+        for: 1m
+        labels:
+          severity: critical
+          team: trading
+        annotations:
+          summary: "Trade execution failures detected"
+          description: "{{ $value }} trade failures per second"
+          runbook_url: "https://docs.flowrex.io/runbooks/trade-failures"
+
+      # Signal Rejection Spike
+      - alert: HighSignalRejectionRate
+        expr: |
+          sum(rate(flowrex_signals_rejected_total[5m])) 
+          / sum(rate(flowrex_signals_generated_total[5m])) > 0.5
+        for: 10m
+        labels:
+          severity: warning
+          team: trading
+        annotations:
+          summary: "High signal rejection rate"
+          description: "Risk engine is rejecting {{ $value | humanizePercentage }} of signals"
+
+      # No Trading Activity (during market hours)
+      - alert: NoTradingActivity
+        expr: |
+          sum(rate(flowrex_trades_executed_total[30m])) == 0
+          and ON() hour() >= 9 and hour() <= 16  # Market hours check
+        for: 30m
+        labels:
+          severity: warning
+          team: trading
+        annotations:
+          summary: "No trading activity detected"
+          description: "No trades executed in the last 30 minutes during market hours"
+
+      # Strategy PnL Alert
+      - alert: NegativeStrategyPnL
+        expr: flowrex_strategy_pnl < -10000  # $10,000 loss threshold
+        for: 5m
+        labels:
+          severity: warning
+          team: trading
+        annotations:
+          summary: "Strategy {{ $labels.strategy }} has significant losses"
+          description: "Current PnL: ${{ $value }}"
+
+  # ==========================================================================
+  # Infrastructure Alerts
+  # ==========================================================================
+  - name: flowrex_infrastructure
+    interval: 30s
+    rules:
+      # High CPU Usage
+      - alert: HighCPUUsage
+        expr: |
+          100 - (avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 10m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "High CPU usage detected"
+          description: "CPU usage is {{ $value }}%"
+
+      # High Memory Usage
+      - alert: HighMemoryUsage
+        expr: |
+          (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) 
+          / node_memory_MemTotal_bytes * 100 > 85
+        for: 10m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "High memory usage detected"
+          description: "Memory usage is {{ $value }}%"
+
+      # Disk Space Low
+      - alert: DiskSpaceLow
+        expr: |
+          (node_filesystem_avail_bytes{fstype!="tmpfs"} 
+          / node_filesystem_size_bytes{fstype!="tmpfs"}) * 100 < 15
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "Disk space running low"
+          description: "Only {{ $value }}% disk space remaining on {{ $labels.mountpoint }}"
+
+      # Redis Connection Issues
+      - alert: RedisConnectionIssues
+        expr: flowrex_redis_connections < 1
+        for: 2m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "Redis connection lost"
+          description: "Unable to connect to Redis"
+
+  # ==========================================================================
+  # WebSocket Alerts
+  # ==========================================================================
+  - name: flowrex_websocket
+    interval: 30s
+    rules:
+      # WebSocket Connection Drop
+      - alert: WebSocketConnectionDrop
+        expr: |
+          delta(flowrex_websocket_connections[5m]) < -10
+        for: 1m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "Sudden drop in WebSocket connections"
+          description: "Lost {{ $value }} connections in the last 5 minutes"
+
+      # No WebSocket Connections
+      - alert: NoWebSocketConnections
+        expr: flowrex_websocket_connections == 0
+        for: 10m
+        labels:
+          severity: info
+          team: backend
+        annotations:
+          summary: "No active WebSocket connections"
+          description: "No clients connected via WebSocket"
+
+  # ==========================================================================
+  # AI Agent Alerts
+  # ==========================================================================
+  - name: flowrex_agents
+    interval: 30s
+    rules:
+      # Agent Processing Time
+      - alert: SlowAgentProcessing
+        expr: |
+          histogram_quantile(0.95, sum(rate(flowrex_agent_processing_seconds_bucket[5m])) by (le, agent_type)) > 30
+        for: 5m
+        labels:
+          severity: warning
+          team: ai
+        annotations:
+          summary: "Slow AI agent processing"
+          description: "Agent {{ $labels.agent_type }} taking {{ $value }}s to process"
+
+      # Agent Task Failures
+      - alert: AgentTaskFailures
+        expr: |
+          sum(rate(flowrex_agent_tasks_total{status="failed"}[5m])) by (agent_type) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          team: ai
+        annotations:
+          summary: "AI agent task failures"
+          description: "Agent {{ $labels.agent_type }} failing tasks"
+
+  # ==========================================================================
+  # Backtest Alerts
+  # ==========================================================================
+  - name: flowrex_backtest
+    interval: 60s
+    rules:
+      # Backtest Queue Buildup
+      - alert: BacktestQueueBuildup
+        expr: flowrex_backtests_running > 10
+        for: 15m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "Backtest queue building up"
+          description: "{{ $value }} backtests running concurrently"

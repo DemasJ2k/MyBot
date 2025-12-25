@@ -1,19 +1,45 @@
+"""
+Application configuration for Flowrex.
+
+Prompt 17 - Deployment Prep.
+
+Provides:
+- Environment-aware settings
+- Secrets validation
+- CORS configuration
+"""
+
 from pydantic_settings import BaseSettings
 from pydantic import field_validator
+from functools import lru_cache
 import os
 
 
 class Settings(BaseSettings):
+    # Environment
     app_env: str = "development"
+    environment: str = ""  # Alias for app_env
+    
+    # Security
     app_secret_key: str = ""
     jwt_secret_key: str = ""
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
     refresh_token_expire_days: int = 7
+    
+    # Database
     database_url: str = "sqlite+aiosqlite:///./flowrex_dev.db"
+    
+    # Redis
     redis_url: str = "redis://localhost:6379/0"
+    
+    # Debug
     debug: bool = True
+    
+    # CSRF
     csrf_protection_enabled: bool = True
+    
+    # CORS
     cors_allowed_origins: list[str] | str = ["http://localhost:3000"]
 
     # TwelveData API
@@ -32,8 +58,24 @@ class Settings(BaseSettings):
         return v
 
     @property
+    def effective_env(self) -> str:
+        """Get effective environment name."""
+        return self.environment or self.app_env
+
+    @property
     def is_production(self) -> bool:
-        return self.app_env in ("production", "prod")
+        """Check if running in production."""
+        return self.effective_env in ("production", "prod")
+
+    @property
+    def is_staging(self) -> bool:
+        """Check if running in staging."""
+        return self.effective_env in ("staging", "stage")
+
+    @property
+    def is_development(self) -> bool:
+        """Check if running in development."""
+        return self.effective_env in ("development", "dev", "")
 
     @property
     def cors_origins(self) -> list[str]:
@@ -45,6 +87,14 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = False
+        extra = "ignore"  # Ignore extra env vars not defined in Settings
 
 
+@lru_cache()
+def get_settings() -> Settings:
+    """Get cached settings instance."""
+    return Settings()
+
+
+# Default instance for backwards compatibility
 settings = Settings()

@@ -94,10 +94,19 @@
 - Prompt 14 (Settings): 33 tests
 - Prompt 15 (CROSSCHECK): 12 tests
 - Prompt 16 (Simulation): 38 tests
-- **Backend Total: 293 tests** ✅ All passing
+- **Backend Total: 297 tests** ✅ All passing
 - Prompt 12 (Frontend): 41 tests
 - **Frontend Total: 41 tests** ✅ All passing
-- **Combined Total: 334 tests**
+- **Combined Total: 338 tests**
+
+## Prompt 17 Deployment Prep Notes
+- Creating `config/` directory conflicted with `config.py` - keep single file
+- Observability uses optional deps (prometheus_client, pythonjsonlogger) with fallbacks
+- Metrics endpoint at `/metrics` excluded from metrics collection to avoid recursion
+- Security middleware adds request ID for distributed tracing
+- Migration scripts use asyncio for database connection check
+- Deployment checklist designed for CI/CD integration
+- Alerts.yaml follows Prometheus alerting rules format
 
 ## Security Implementation Notes
 - CSRF uses double-submit cookie pattern (cookie value must match X-CSRF-Token header)
@@ -154,3 +163,55 @@
 - Frontend components provide visual mode indication and confirmation dialogs
 - Migration 013 adds: simulation_accounts, execution_mode_audit, simulation_positions tables
 - File reading in crosscheck tests needs `encoding="utf-8"` for Unicode compatibility
+
+## Audit Fixes Session (December 25, 2025) Notes
+- **H1 Fix:** Live mode password verification was placeholder (`password_verified = True`)
+  - Fixed by using `verify_password(request.password, current_user.hashed_password)`
+  - Added 4 unit tests in `TestPasswordVerificationForLiveMode`
+- **H2 Fix:** E2E tests were failing due to multiple issues:
+  - E2E conftest was making real HTTP calls to localhost:8000
+  - Fixed by adding ASGI transport fallback for standalone testing
+  - Login was using form-data but API expects JSON (`email`, not `username`)
+  - `test_risk_state_retrieval` needed to accept empty state response
+  - `test_backtest_execution` used wrong strategy name (`sma_crossover` → `nbb`)
+  - `Candle.timeframe` bug - actual field is `Candle.interval`
+  - `StrategyManager.get_available_strategies()` was missing - added as class method
+- **Test counts after fixes:** Backend: 297, E2E: 13 passed + 1 skipped, Frontend: 41
+
+## Prompt 18 Production Deployment Notes
+- Docker multi-stage builds reduce image size and attack surface
+- Non-root users (flowrex) in containers for security
+- dumb-init in frontend container for proper signal handling
+- Rolling updates: scale up → health check → scale down (zero downtime)
+- Health endpoints hierarchy: /health (basic) → /health/ready (deps) → /health/live (liveness)
+- NGINX rate limiting zones: api (100r/s), auth (20r/m), ws (20r/s)
+- Prometheus scrape interval: 15s for metrics freshness
+- Grafana datasources auto-provisioned via YAML files
+- Deployment script uses Slack webhooks for notifications
+- Rollback script can optionally restore database from backup
+- Incident severity levels: P0 (immediate), P1 (15min), P2 (1hr), P3 (next day)
+- Post-mortem template includes timeline, root cause, impact, action items
+
+## Production Infrastructure Decisions
+- 5 backend replicas for high availability
+- 3 frontend replicas for load distribution
+- Resource limits prevent runaway containers (backend: 1CPU/1GB, frontend: 0.5CPU/512MB)
+- Update parallelism: 2 at a time to maintain capacity during deploys
+- Health check intervals: 30s with 60s start period for warm-up
+- Postgres connection limit: 100 (shared mode)
+- Redis maxmemory: 256mb with allkeys-lru eviction
+
+## Prompt 18 Audit Fix Learnings (December 25, 2025)
+- Settings class with pydantic-settings needs `extra="ignore"` when .env has extra variables
+- psutil must be added to requirements.txt for system metrics in health endpoints
+- Redis CLI password should use REDISCLI_AUTH env var, not `-a` flag (security)
+- Alertmanager service required when Prometheus config references alerting
+- Health endpoint tests should be flexible about DB connectivity in isolated test environments
+- nginx-exporter requires NGINX stub_status module configuration (not trivial to add)
+- SSL certificate check should be blocking for production deployments
+
+## Updated Test Count Summary
+- **Backend Total: 311 tests** (297 original + 14 health)
+- **Frontend Total: 41 tests**
+- **E2E: 13 passed, 1 skipped**
+- **Combined Total: 365+ tests**

@@ -17,6 +17,7 @@ from datetime import datetime
 
 from app.database import get_db
 from app.auth.dependencies import get_current_user
+from app.auth.password import verify_password
 from app.models.user import User
 from app.models.execution_mode import ExecutionMode
 from app.services.execution_mode_service import (
@@ -165,12 +166,15 @@ async def change_mode(
     
     service = ExecutionModeService(db)
     
-    # Password verification for live mode
+    # Password verification for live mode - verify against user's stored hash
     password_verified = False
     if new_mode == ExecutionMode.LIVE and request.password:
-        # In a real implementation, verify password against user's stored hash
-        # For now, we'll just check that a password was provided
-        password_verified = True  # TODO: Implement actual password verification
+        password_verified = verify_password(request.password, current_user.hashed_password)
+        if not password_verified:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid password. Password verification failed for live trading.",
+            )
     
     try:
         new_mode = await service.change_mode(

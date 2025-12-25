@@ -144,7 +144,7 @@ async def authenticated_client(test_db, test_user):
             # Login to get token
             response = await ac.post(
                 "/api/v1/auth/login",
-                data={"username": test_user.email, "password": "testpass123"}
+                json={"email": test_user.email, "password": "testpass123"}
             )
             if response.status_code == 200:
                 token = response.json()["access_token"]

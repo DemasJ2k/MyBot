@@ -1,0 +1,133 @@
+# Flowrex Prometheus Configuration
+# Prompt 18 - Production Deployment
+#
+# Scrape configurations for all Flowrex services and exporters
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'flowrex-production'
+    environment: 'prod'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - alertmanager:9093
+      scheme: http
+      timeout: 10s
+
+# Load alerting rules
+rule_files:
+  - "/etc/prometheus/alerts.yaml"
+
+# Scrape configurations
+scrape_configs:
+  # ==========================================================================
+  # Prometheus Self-Monitoring
+  # ==========================================================================
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    metrics_path: /metrics
+
+  # ==========================================================================
+  # Flowrex Backend API
+  # ==========================================================================
+  - job_name: 'flowrex-backend'
+    static_configs:
+      - targets: ['backend:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'flowrex-backend'
+
+  # ==========================================================================
+  # Node Exporter (System Metrics)
+  # ==========================================================================
+  - job_name: 'node'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 30s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'flowrex-host'
+
+  # ==========================================================================
+  # PostgreSQL Exporter
+  # ==========================================================================
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+    scrape_interval: 30s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'flowrex-postgres'
+
+  # ==========================================================================
+  # Redis Exporter
+  # ==========================================================================
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+    scrape_interval: 30s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'flowrex-redis'
+
+  # ==========================================================================
+  # NGINX Exporter (if using nginx-prometheus-exporter)
+  # Note: Requires nginx-prometheus-exporter service and NGINX stub_status module
+  # Uncomment when nginx-exporter is added to docker-compose.prod.yml
+  # ==========================================================================
+  # - job_name: 'nginx'
+  #   static_configs:
+  #     - targets: ['nginx-exporter:9113']
+  #   scrape_interval: 30s
+  #   relabel_configs:
+  #     - source_labels: [__address__]
+  #       target_label: instance
+  #       replacement: 'flowrex-nginx'
+
+  # ==========================================================================
+  # Docker Daemon Metrics (optional)
+  # ==========================================================================
+  # - job_name: 'docker'
+  #   static_configs:
+  #     - targets: ['host.docker.internal:9323']
+  #   scrape_interval: 30s
+
+  # ==========================================================================
+  # Blackbox Exporter (Endpoint Monitoring)
+  # ==========================================================================
+  # - job_name: 'blackbox-http'
+  #   metrics_path: /probe
+  #   params:
+  #     module: [http_2xx]
+  #   static_configs:
+  #     - targets:
+  #       - https://flowrex.app
+  #       - https://api.flowrex.app/health
+  #   relabel_configs:
+  #     - source_labels: [__address__]
+  #       target_label: __param_target
+  #     - source_labels: [__param_target]
+  #       target_label: instance
+  #     - target_label: __address__
+  #       replacement: blackbox-exporter:9115
+
+# Remote write configuration (optional, for long-term storage)
+# remote_write:
+#   - url: "http://victoriametrics:8428/api/v1/write"
+#     queue_config:
+#       capacity: 10000
+#       max_samples_per_send: 1000
+#       max_shards: 5

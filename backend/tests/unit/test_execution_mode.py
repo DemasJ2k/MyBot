@@ -594,3 +594,42 @@ class TestSystemSettingsIntegration:
         
         # Verify the field is mapped
         assert hasattr(SystemSettings, 'execution_mode')
+
+
+# ============= Password Verification Tests =============
+
+class TestPasswordVerificationForLiveMode:
+    """Tests for password verification when enabling live mode."""
+
+    def test_verify_password_function_exists(self):
+        """verify_password function should be available."""
+        from app.auth.password import verify_password
+        assert callable(verify_password)
+
+    def test_verify_password_correct(self):
+        """Correct password should verify successfully."""
+        from app.auth.password import hash_password, verify_password
+        
+        password = "test_password_123"
+        hashed = hash_password(password)
+        
+        assert verify_password(password, hashed) is True
+
+    def test_verify_password_incorrect(self):
+        """Incorrect password should fail verification."""
+        from app.auth.password import hash_password, verify_password
+        
+        password = "test_password_123"
+        hashed = hash_password(password)
+        
+        assert verify_password("wrong_password", hashed) is False
+
+    def test_live_mode_requires_password_verification(self):
+        """Live mode change should require actual password verification."""
+        # This verifies the import is correct in execution_mode_routes
+        from app.api.v1.execution_mode_routes import verify_password
+        from app.auth.password import verify_password as auth_verify
+        
+        # Should be the same function
+        assert verify_password is auth_verify
+

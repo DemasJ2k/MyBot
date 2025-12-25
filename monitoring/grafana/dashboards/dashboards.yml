@@ -1,0 +1,16 @@
+# Grafana Dashboard Provisioning
+# Prompt 18 - Production Deployment
+
+apiVersion: 1
+
+providers:
+  - name: 'Flowrex Dashboards'
+    orgId: 1
+    folder: 'Flowrex'
+    folderUid: 'flowrex'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards
