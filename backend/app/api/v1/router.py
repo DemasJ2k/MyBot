@@ -10,6 +10,7 @@ from app.api.v1 import (
     risk_routes,
     execution_routes,
     journal_routes,
+    settings_routes,
 )
 
 api_router = APIRouter()
@@ -23,3 +24,4 @@ api_router.include_router(coordination_routes.router)
 api_router.include_router(risk_routes.router)
 api_router.include_router(execution_routes.router)
 api_router.include_router(journal_routes.router)
+api_router.include_router(settings_routes.router)

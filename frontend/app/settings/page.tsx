@@ -10,6 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRiskLimits } from '@/hooks/useRisk';
 import { useBrokers } from '@/hooks/useExecution';
 import { snakeToTitle } from '@/lib/utils';
+import SettingsManager from '@/components/settings/SettingsManager';
 import {
   Settings,
   Shield,
@@ -25,7 +26,10 @@ import {
   Moon,
   Sun,
   Monitor,
+  Sliders,
 } from 'lucide-react';
+
+type SettingsView = 'account' | 'system';
 
 export default function SettingsPage() {
   const { mode, setMode, isLoading: modeLoading } = useMode();
@@ -33,6 +37,7 @@ export default function SettingsPage() {
   const { data: riskLimits, isLoading: limitsLoading } = useRiskLimits();
   const { data: brokers } = useBrokers();
 
+  const [activeView, setActiveView] = useState<SettingsView>('system');
   const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
   const [notifications, setNotifications] = useState({
     signals: true,
@@ -66,38 +71,64 @@ export default function SettingsPage() {
         title="Settings"
         description="Configure your trading platform"
       >
-        {/* Account Section */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5 text-gray-500" />
-              Account
-            </CardTitle>
-            <CardDescription>Manage your account settings</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                <div>
-                  <p className="font-medium">{user?.email || 'user@example.com'}</p>
-                  <p className="text-sm text-gray-500">Account Email</p>
-                </div>
-                <Badge variant="success">Active</Badge>
-              </div>
-              <div className="flex gap-4">
-                <Button variant="outline" disabled>
-                  <Key className="h-4 w-4 mr-2" />
-                  Change Password
-                </Button>
-                <Button variant="destructive" onClick={logout}>
-                  Sign Out
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* View Toggle */}
+        <div className="mb-6 flex gap-2">
+          <Button
+            variant={activeView === 'system' ? 'default' : 'outline'}
+            onClick={() => setActiveView('system')}
+          >
+            <Sliders className="h-4 w-4 mr-2" />
+            System Settings
+          </Button>
+          <Button
+            variant={activeView === 'account' ? 'default' : 'outline'}
+            onClick={() => setActiveView('account')}
+          >
+            <User className="h-4 w-4 mr-2" />
+            Account & Preferences
+          </Button>
+        </div>
 
-        {/* Trading Mode Section */}
+        {/* System Settings View - New SettingsManager */}
+        {activeView === 'system' && (
+          <SettingsManager />
+        )}
+
+        {/* Account/Preferences View - Original Settings */}
+        {activeView === 'account' && (
+          <>
+            {/* Account Section */}
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <User className="h-5 w-5 text-gray-500" />
+                  Account
+                </CardTitle>
+                <CardDescription>Manage your account settings</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <div>
+                      <p className="font-medium">{user?.email || 'user@example.com'}</p>
+                      <p className="text-sm text-gray-500">Account Email</p>
+                    </div>
+                    <Badge variant="success">Active</Badge>
+                  </div>
+                  <div className="flex gap-4">
+                    <Button variant="outline" disabled>
+                      <Key className="h-4 w-4 mr-2" />
+                      Change Password
+                    </Button>
+                    <Button variant="destructive" onClick={logout}>
+                      Sign Out
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Trading Mode Section */}
         <Card className="mb-6">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -411,6 +442,8 @@ export default function SettingsPage() {
             </div>
           </CardContent>
         </Card>
+          </>
+        )}
       </PageContainer>
     </>
   );

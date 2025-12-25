@@ -91,10 +91,11 @@
 - Prompt 09 (Risk): 19 tests
 - Prompt 10 (Execution): 28 tests
 - Prompt 11 (Journal): 22 tests
-- **Backend Total: 210 tests** ✅ All passing (verified 2025-12-25)
+- Prompt 14 (Settings): 33 tests
+- **Backend Total: 243 tests** ✅ All passing
 - Prompt 12 (Frontend): 41 tests
 - **Frontend Total: 41 tests** ✅ All passing
-- **Combined Total: 251 tests**
+- **Combined Total: 284 tests**
 
 ## Security Implementation Notes
 - CSRF uses double-submit cookie pattern (cookie value must match X-CSRF-Token header)
@@ -113,3 +114,14 @@
 - Tests skip by default to avoid failures in CI without services
 - Use `pytest tests/e2e/ -v --e2e` to run E2E suite
 - E2E tests need running backend (localhost:8000) and services (Postgres, Redis)
+
+## Prompt 14 (Settings & Modes) Implementation Notes
+- SystemSettings is a singleton pattern - only one row exists in database
+- Hard-coded constants in risk/constants.py are IMMUTABLE - soft settings cannot exceed these
+- Mode switching from GUIDE → AUTONOMOUS requires broker connection (except for PAPER broker)
+- SettingsAudit creates immutable audit trail - every change recorded with reason
+- SQLAlchemy `mapped_column(default=...)` only applies during DB insert, not Python instantiation
+  - Tests that create model instances must explicitly provide all required field values
+  - Use helper methods like `_create_settings()` to provide defaults in tests
+- UserPreferences stores favorite_strategies and favorite_symbols as JSON arrays
+- Settings API returns `can_switch` boolean to indicate if mode switch is currently allowed

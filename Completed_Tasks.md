@@ -529,3 +529,85 @@ Applied fixes from Audit_Fixes.md:
 - **Backend:** 210 tests passing
 - **Frontend:** 41 tests passing
 - **Total:** 251 tests passing
+
+## 2025-01-XX - Prompt 14: Settings and Modes
+- Created centralized settings management system with single source of truth
+- Enhanced risk/constants.py with:
+  - MAX_POSITION_SIZE_PERCENT = 10.0% (new constant)
+  - STRATEGY_AUTO_DISABLE_THRESHOLD = 5 (new constant)
+  - validate_immutable_constants(): Runtime validation that hard limits are unchanged
+  - All constants are immutable - soft settings cannot exceed these values
+- Created SystemSettings model (models/system_settings.py):
+  - SystemMode enum (GUIDE/AUTONOMOUS) for operation mode
+  - BrokerType enum (MT5/OANDA/BINANCE/PAPER) for broker selection
+  - Singleton pattern - only one settings row exists
+  - Risk limits: max_risk_per_trade, max_daily_drawdown, max_positions
+  - Behavior flags: trading_enabled, notifications_enabled, auto_optimization
+  - Strategy management: strategies_enabled JSON list, min_win_rate, max_consecutive_losses
+  - All settings validated against hard-coded constants
+- Created SettingsAudit model:
+  - Immutable audit trail for all settings changes
+  - Tracks version, change_type, changed_by, changed_at, reason
+  - Stores old_values and new_values as JSON for diff comparison
+- Created UserPreferences model:
+  - Per-user preferences: theme, dashboard_layout, notification_settings
+  - favorite_strategies, favorite_symbols for quick access
+  - Default notification settings for trade, risk, system alerts
+- Created SettingsService (services/settings_service.py):
+  - get_settings(): Creates singleton or returns existing
+  - update_settings(): Validates, audits, and updates settings
+  - set_mode(): GUIDE ↔ AUTONOMOUS transition with validation rules
+  - _validate_mode_switch(): Enforces broker connection for non-paper AUTONOMOUS
+  - _create_audit_record(): Records every change with reason
+- Created UserPreferencesService:
+  - get_preferences(): Creates defaults or returns existing
+  - update_preferences(): Updates user preferences
+  - add/remove_favorite_strategy/symbol methods
+- Created Settings API routes (api/v1/settings_routes.py):
+  - GET /api/v1/settings - Get current system settings
+  - PUT /api/v1/settings - Update settings (with audit)
+  - GET /api/v1/settings/mode - Get current mode with switch eligibility
+  - POST /api/v1/settings/mode - Switch mode (with validation)
+  - GET /api/v1/settings/audit - Get settings change history
+  - GET /api/v1/settings/constants - Get immutable risk constants
+  - GET /api/v1/settings/preferences - Get user preferences
+  - PUT /api/v1/settings/preferences - Update user preferences
+  - POST /api/v1/settings/favorites/strategies - Add favorite strategy
+  - DELETE /api/v1/settings/favorites/strategies/{name} - Remove favorite
+  - POST /api/v1/settings/favorites/symbols - Add favorite symbol
+  - DELETE /api/v1/settings/favorites/symbols/{symbol} - Remove favorite
+- Created Alembic migration 012_add_settings_tables.py:
+  - system_settings table (singleton with constraints)
+  - settings_audit table (with indexes on changed_at, change_type)
+  - user_preferences table (FK to users, unique constraint on user_id)
+- Enhanced frontend ModeProvider:
+  - Added canSwitch: boolean to indicate if mode switch is allowed
+  - Added switchError: string | null for switch error messages
+  - Updated setMode() to accept optional reason parameter
+- Extended frontend API client (services/api.ts):
+  - getSettings(), updateSettings()
+  - getMode(), setMode(mode, reason)
+  - getSettingsAudit(), getConstants()
+  - getPreferences(), updatePreferences()
+  - addFavoriteStrategy/Symbol(), removeFavoriteStrategy/Symbol()
+- Created SettingsManager UI component (components/settings/SettingsManager.tsx):
+  - 5-tab interface: Risk Limits, Mode & Behavior, Strategy, Notifications, Audit Log
+  - Mode switching confirmation dialog with reason input
+  - Real-time validation feedback
+  - Hard limits displayed as read-only with tooltips
+  - Save bar with unsaved changes indicator
+- Updated Settings page (app/settings/page.tsx):
+  - View toggle between "System Settings" (SettingsManager) and "Account & Preferences"
+  - Seamless integration with existing page structure
+- Created comprehensive unit tests (tests/unit/test_settings.py):
+  - TestRiskConstants: 3 tests for immutable constants validation
+  - TestSystemSettingsModel: 10 tests for model validation
+  - TestSettingsService: 9 tests for service layer
+  - TestModeTransitions: 3 tests for mode switch rules
+  - TestUserPreferencesService: 5 tests for preferences
+  - TestSettingsAudit: 3 tests for audit trail
+  - All 33 tests passing
+- Test verification:
+  - Backend: 243 tests passing (210 + 33 new)
+  - Frontend: 41 tests passing
+  - Total: 284 tests passing

@@ -8,7 +8,9 @@ interface ModeContextType {
   mode: SystemMode;
   isLoading: boolean;
   error: string | null;
-  setMode: (mode: SystemMode) => Promise<void>;
+  canSwitch: boolean;
+  switchError: string | null;
+  setMode: (mode: SystemMode, reason?: string) => Promise<void>;
   refreshMode: () => Promise<void>;
 }
 
@@ -22,6 +24,8 @@ export function ModeProvider({ children }: ModeProviderProps) {
   const [mode, setModeState] = useState<SystemMode>('guide');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [canSwitch, setCanSwitch] = useState(true);
+  const [switchError, setSwitchError] = useState<string | null>(null);
 
   const loadMode = useCallback(async () => {
     try {
@@ -29,6 +33,8 @@ export function ModeProvider({ children }: ModeProviderProps) {
       setError(null);
       const data = await apiClient.getSystemMode();
       setModeState(data.mode);
+      setCanSwitch(true);
+      setSwitchError(null);
     } catch (err) {
       console.error('Failed to load system mode:', err);
       setError('Failed to load system mode');
@@ -43,15 +49,28 @@ export function ModeProvider({ children }: ModeProviderProps) {
     loadMode();
   }, [loadMode]);
 
-  const setMode = async (newMode: SystemMode) => {
+  const setMode = async (newMode: SystemMode, reason?: string) => {
     try {
       setError(null);
-      await apiClient.setSystemMode(newMode);
+      setSwitchError(null);
+      setIsLoading(true);
+      
+      await apiClient.setSystemMode(newMode, reason);
       setModeState(newMode);
-    } catch (err) {
+      setCanSwitch(true);
+      
+      // Broadcast mode change event for other components
+      window.dispatchEvent(new CustomEvent('modeChanged', { detail: { mode: newMode } }));
+    } catch (err: unknown) {
       console.error('Failed to set system mode:', err);
-      setError('Failed to set system mode');
+      const errorMessage = err instanceof Error 
+        ? err.message 
+        : (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Failed to set system mode';
+      setSwitchError(errorMessage);
+      setCanSwitch(false);
       throw err;
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -60,7 +79,7 @@ export function ModeProvider({ children }: ModeProviderProps) {
   };
 
   return (
-    <ModeContext.Provider value={{ mode, isLoading, error, setMode, refreshMode }}>
+    <ModeContext.Provider value={{ mode, isLoading, error, canSwitch, switchError, setMode, refreshMode }}>
       {children}
     </ModeContext.Provider>
   );

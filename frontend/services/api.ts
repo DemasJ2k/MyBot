@@ -413,6 +413,65 @@ class ApiClient {
     });
     return response.data;
   }
+
+  // ============= Settings API =============
+  
+  // System Settings
+  async getSystemSettings() {
+    const response = await this.client.get('/settings');
+    return response.data;
+  }
+
+  async updateSystemSettings(updates: Record<string, unknown>, reason?: string) {
+    const response = await this.client.put('/settings', { ...updates, reason });
+    return response.data;
+  }
+
+  // System Mode (via new settings endpoint)
+  async getSystemMode() {
+    const response = await this.client.get('/settings/mode');
+    return response.data;
+  }
+
+  async setSystemMode(mode: 'guide' | 'autonomous', reason?: string) {
+    const response = await this.client.post('/settings/mode', { mode, reason });
+    return response.data;
+  }
+
+  // Hard Constants
+  async getHardConstants() {
+    const response = await this.client.get('/settings/constants');
+    return response.data;
+  }
+
+  // Settings Audit
+  async getSettingsAudit(limit = 100, changeType?: string) {
+    const response = await this.client.get('/settings/audit', {
+      params: { limit, change_type: changeType },
+    });
+    return response.data;
+  }
+
+  // User Preferences
+  async getUserPreferences() {
+    const response = await this.client.get('/settings/preferences');
+    return response.data;
+  }
+
+  async updateUserPreferences(updates: Record<string, unknown>) {
+    const response = await this.client.put('/settings/preferences', updates);
+    return response.data;
+  }
+
+  async addFavoriteSymbol(symbol: string) {
+    const response = await this.client.post(`/settings/preferences/favorites/symbols/${symbol}`);
+    return response.data;
+  }
+
+  async removeFavoriteSymbol(symbol: string) {
+    const response = await this.client.delete(`/settings/preferences/favorites/symbols/${symbol}`);
+    return response.data;
+  }
 }
 
 export const apiClient = new ApiClient();

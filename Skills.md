@@ -14,7 +14,7 @@
 - AsyncMock and MagicMock for unit testing
 - In-memory SQLite for isolated auth tests
 - Cross-database compatible models (PostgreSQL + SQLite)
-- 141+ unit tests covering all components
+- 284 unit tests covering all components (243 backend + 41 frontend)
 
 ## Infrastructure
 - Docker Compose multi-service orchestration
@@ -156,3 +156,21 @@
 - Redis mock for token blacklist in tests
 - Rate limiter reset between test runs
 - User ID propagation through Signal → Position → ExecutionOrder chain
+
+## Settings and Configuration Management
+- Singleton pattern for system settings (single source of truth)
+- Immutable hard-coded constants that soft settings cannot exceed
+- Settings audit trail with version tracking and change reasons
+- Mode transition validation rules:
+  - GUIDE → AUTONOMOUS requires broker connection (except PAPER)
+  - Settings changes recorded with old_values and new_values JSON diff
+- SystemMode enum (GUIDE/AUTONOMOUS) for operation mode control
+- BrokerType enum (MT5/OANDA/BINANCE/PAPER) for broker selection
+- Per-user preferences with favorites (strategies, symbols)
+- Settings API with full CRUD operations and audit history
+
+## SQLAlchemy Model Defaults Gotcha
+- `mapped_column(default=...)` only applies during database INSERT
+- Python model instantiation does NOT apply these defaults
+- Tests must explicitly provide all required field values
+- Use helper methods to create model instances with explicit defaults
